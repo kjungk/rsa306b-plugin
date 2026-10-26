@@ -1,305 +1,118 @@
-![SoundBase Plugin Template — the Lab's signal-flask mark, the SoundBase wordmark, and one real sweep from this plugin's synthetic spectrum](.github/banner.svg)
+# Tektronix RSA306B for SoundBase
 
-# SoundBase Plugin Template
+A spectrum-analyzer plugin built from the official SoundBase template, with a
+native Apple silicon backend and a Windows backend using the Tektronix API.
 
-A complete, working SoundBase plugin. Press **Use this template**, run it, and
-you have a device in SoundBase's live-scan picker — it serves a synthetic
-spectrum (a noise floor, two carriers, an intermittent transient) so the whole
-path works before you own any hardware.
+**Development candidate — not yet qualified for public release.** The intended
+range is **9 kHz–6.2 GHz** on both platforms. New macOS LF factory correction,
+real-device acceptance of this package, and independent signal-generator
+measurements must pass before publication. Synthetic tests do not establish RF
+accuracy. See [validation and remaining gates](docs/rsa306b-validation.md).
 
-Then you replace one file.
+| Platform | Runtime | Initial hardware qualification |
+| --- | --- | --- |
+| macOS 14+, arm64 | Bundled C++ worker and libusb | RSA306B HW7, firmware 1.7, FPGA 2.1 |
+| Windows x64 | Bundled Python; separately installed Tektronix API/USB driver | RSA306B; initial reference host uses API 5.8.0275.0 |
 
-> **Your plugin has to live in a public repository on GitHub.** The Lab — the
-> route by which users install a plugin — lists a public GitHub repository
-> and installs from its GitHub Releases. A private repository
-> cannot be listed, and no other host (GitLab, Bitbucket, self-hosted) works.
-> Decide that before you start, not when you come to publish.
+Intel Mac, Windows arm64, Linux hardware operation and multiple connected
+analyzers are outside this release. Both backends use sequential acquisition
+bursts: wide scans are stitched observations with gaps, not simultaneous or
+continuous monitoring across the entire span.
 
-```sh
-npm install
-npm run doctor      # is everything wired up?
-npm start
-# SB_PLUGIN_READY {"port":54321}
-# [info] template 0.1.0 listening on 127.0.0.1:54321
-```
+## Using the plugin
 
-```sh
-npm test            # the contract, exercised against your adapter
-npm run smoke       # boots main.js as a child process, exactly as the host does
-```
+Once the release is qualified and approved, install **Tektronix RSA306B** from
+SoundBase Lab. SoundBase supplies the JavaScript runtime; recipients do not need
+Node, Python, a compiler or Homebrew. Windows users must separately install the
+official x64 Tektronix RSA API and compatible USB driver (or SignalVu-PC).
+[Vendor downloads](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer)
+provide the software and its installation instructions. Keep SignalVu and other
+analyzer applications closed while using SoundBase.
 
-To see it in SoundBase Desktop without copying anything, start the app with
-`SB_PLUGIN_DIRS` set to the folder that *contains* this one:
+Select the analyzer by its serial number in SoundBase's live-scan picker.
+Settings and traces use the standard SoundBase controls; the plugin has no
+separate UI. macOS exposes RF attenuation and IF gain, with fixed gain in the
+LF path. Windows exposes a Reference level control. SoundBase handles hold and
+average trace modes. Incomplete, flagged, or incorrectly calibrated sweeps are
+withheld rather than filled with invented data.
 
-```sh
-# macOS — this checkout is ~/CODE/my-plugin
-SB_PLUGIN_DIRS="$HOME/CODE" open -a "SoundBase Desktop"
-```
+The optional **Tektronix API path (Windows)** setting accepts an absolute DLL
+path or its directory. Leave it empty for standard installed locations. Advanced
+worker/Python path overrides are also explicit plugin settings; device selection
+never depends on a machine-local settings file.
 
-[docs/running-in-soundbase.md](docs/running-in-soundbase.md) has the rest:
-the plugin manager, where your device shows up, and the logs.
+Missing runtime/API prerequisites appear as **Needs setup**, with instructions.
+The plugin periodically rechecks them. No analyzer attached is a normal state,
+not a setup failure.
 
-**Never used SoundBase?** Start with
-[docs/soundbase.md](docs/soundbase.md) — what the app is, what the people using
-it are doing, and where your device lands. It is written for someone who will
-never see the SoundBase code.
+This beta uses ad-hoc macOS signing and an unsigned Windows worker. It is not
+notarized or publisher-signed. Installation must work under the target machine's
+normal security policy; the installer does not disable system protections.
 
-## What a plugin is
+## Development
 
-A **network service** that provides devices to SoundBase over a versioned HTTP
-contract. SoundBase spawns it as a child process and supervises it —
-handshake, health, crash-restart, teardown. You write device logic. You never
-write UI, IPC, or HTTP.
-
-```
-soundbase-plugin.json   your identity, products and config fields
-main.js                 shell bootstrap — copy it verbatim, don't edit it
-adapter.js              your device logic. This is the file you replace.
-driver/                 optional: anything protocol-specific adapter.js uses
-```
-
-`@soundbase/plugin-shell` implements the entire contract: the HTTP server on
-`127.0.0.1:0`, the `SB_PLUGIN_READY` stdout handshake, bearer-token auth, SSE
-lifecycle events, sweep-id bookkeeping, `GET /trace` long-polling, and
-trace-mode accumulation at full sweep rate. Your adapter never sees a request.
-
-## Installing the SDK
+Node 20+ is required for development. Install the pinned public SDK:
 
 ```sh
-npm install
+npm ci
+npm run manifest
+npm test
+npm run doctor
+npm run smoke
+npm run smoke:boot
 ```
 
-That is the whole setup. The two SDK packages are on public npm — nothing else
-to fetch, and no SoundBase checkout required.
-
-## Making it yours
-
-**1. Take an id.**
+`npm run smoke` explicitly selects a synthetic worker and requires a real-shell
+trace. `smoke:boot` verifies startup without discovering or opening hardware.
+Neither command measures RF. Build native runtimes using the commands in
+[release preparation](release/README.md), then exercise the actual target worker
+without hardware:
 
 ```sh
-npm run rename my-plugin-id -- --name "My Analyzer"
+node scripts/smoke.mjs --real-worker
 ```
 
-The id appears in five places that must agree — the manifest, every product's
-`deviceTypeId`, `adapter.js`, the package name, and the `x.<id>.` namespace of
-every extension state key. `rename` changes all five.
-Do it before you publish anything: the id is stored in users' saved projects.
+For local development, quit SoundBase and set `SB_PLUGIN_DIRS` to the **parent**
+of this checkout before starting Desktop. This starts a real plugin unless an
+explicit mock environment variable is set:
 
-**2. Describe your hardware** in `soundbase-plugin.json` — one `products` entry
-per model, plus the config fields SoundBase should render.
-([reference](docs/manifest-reference.md))
-
-**3. Replace `adapter.js`.** It exports `discoverDevices` and one adapter
-factory per module — `createSpectrumAnalyzerAdapter` for a spectrum source,
-`createMonitoringAdapter` for a receiver or IEM transmitter that lands in
-device monitoring. The template ships one synthetic device of each; keep the
-factory your hardware needs:
-
-```js
-// called while SoundBase is enumerating; return currently reachable devices
-export async function discoverDevices(pluginConfig) {
-  return [{ id: 'usb:/dev/tty…', name: 'My Analyzer',
-            product: 'plugin:my-id/model',
-            transport: { kind: 'usb', path: '/dev/tty…' } }];
-}
-
-// one instance per device; device = { id, product, config }
-export function createSpectrumAnalyzerAdapter(device, pluginConfig) {
-  return {
-    async open() {              // connect + identify
-      return {
-        capabilities: { minFrequencyHz, maxFrequencyHz, rbwHz: [...] },
-        identity: { model, firmware },
-      };
-    },
-    async applyConfig(cfg) {    // cfg = { startHz, stopHz, pointCount?, rbwHz?, controls? }
-      return effective;         // echo what the hardware actually accepted
-    },
-    // onTrace(ampsDbm: number[]) per sweep; an optional second argument,
-    // [{ name, amplitudesDbm }], adds named curves on the same axis
-    async startSweep(onTrace) {},
-    async stopSweep() {},
-    async close() {},
-  };
-}
+```sh
+SB_PLUGIN_DIRS="$(dirname "$PWD")" open -a "SoundBase Desktop"
 ```
 
-```js
-// a monitored device: push state, apply commands, let the state answer
-export function createMonitoringAdapter(device, pluginConfig) {
-  return {
-    async open() {              // connect, then report everything through this.onState
-      this.onState('frequency', { channels: { 1: 518.1 } });
-      return { channelCount: 1, properties: [ /* PropertyControl descriptors */ ] };
-    },
-    async setProperty({ propertyId, channelIndex, value }) { /* apply, then onState */ },
-    async close() {},
-  };
-}
-```
+Disable the old `rsa306b-native` or `rsa306b-windows` plugin while using this one.
+The new ID is `rsa306b`; select the new device in existing projects. There is no
+automatic project rewrite. Unset `SB_PLUGIN_DIRS` after installing through Lab so
+two copies do not run.
 
-Full reference: [docs/adapter-reference.md](docs/adapter-reference.md).
+See [architecture](docs/rsa306b-architecture.md),
+[testing and hardware acceptance](docs/rsa306b-validation.md), and
+[release preparation](release/README.md). The original template guide set remains
+under [docs](docs/README.md).
 
-**4. Keep the tests passing.** `__tests__/` drives your adapter through the
-real shell over real HTTP. They are written against the *contract*, not against
-the synthetic source, so they keep meaning once your adapter talks to hardware.
+## SDK compatibility and recovery
 
-## A worked example with a real transport
+Dependencies are the public npm `@soundbase/plugin-shell` and
+`@soundbase/plugin-contract` **0.12.2**, speaking core **1.4** and
+SpectrumAnalyzer **1.2**. The similarly numbered copy inside some SoundBase
+installations includes unreleased core 1.5 behavior; this plugin does not copy
+those app dependencies or claim its host-crash lifeline.
 
-[`examples/network-analyzer/`](examples/network-analyzer/README.md) is a second
-complete plugin — a networked instrument over TCP — showing everything the
-synthetic one skips: discovery by probing, addressing from device config, a
-driver with its own fake, device controls, clamping, and a socket that dies
-mid-sweep. Its tests run with nothing plugged in.
+Normal stop, disable and shutdown close owned workers. A worker timeout causes a
+bounded forced termination and a device error. After a forced stop, reconnect
+the analyzer before retrying. Forcibly killing Desktop may leave the core 1.4
+plugin process holding the device: close the orphaned RSA306B plugin/worker using
+the OS process manager, reconnect, and restart Desktop. Exact-package host-crash
+behavior remains part of manual acceptance.
 
-## Rules that will bite you if you break them
+## Licensing and provenance
 
-- **Device ids are yours and must be stable across restarts.** `usb:<path>`,
-  `net:<host>` are the conventions the first-party plugins use. They appear in
-  URLs, and a project stores them.
-- **Device addressing arrives explicitly** on `POST /devices`. Never read a
-  device address from your own machine-local state — the same project opened on
-  another machine must work.
-- **Clamp, don't reject.** When a requested RBW or reference level is out of
-  range, snap it and echo what you settled on. The form keeps showing the
-  user's saved value either way; a rejection just looks broken.
-- **Echo the effective config.** `applyConfig`'s return value is what
-  `GET /devices/{id}/configuration` reports, so the host can always read back
-  what is actually in force.
-- **`main.js` stays byte-identical.** If you find yourself editing it, the
-  thing you want almost certainly belongs in `adapter.js`.
+Original RSA306B code is MIT licensed; the SoundBase template and SDK retain
+their Business Source License terms. See [LICENSE](LICENSE),
+[LICENSE-TEMPLATE](LICENSE-TEMPLATE), and [UPSTREAM.md](UPSTREAM.md). Native and
+runtime dependency notices travel with the release. Tektronix installers, DLLs,
+firmware and private calibration dumps are not redistributed.
 
-`npm run doctor` checks the ones a machine can check.
-
-## Device controls — knobs SoundBase has never heard of
-
-Return `controls` from `open()` and SoundBase renders them beside RBW and point
-count, then hands the values back in `applyConfig`'s `cfg.controls`, keyed by
-the same ids:
-
-```js
-controls: [
-  { id: 'refLevelDbm', type: 'number', label: 'Reference level',
-    unit: 'dBm', default: -20, min: -56, max: 20 },
-  { id: 'detector', type: 'dropdown', label: 'Detector', default: 'peak',
-    choices: [{ id: 'peak', label: 'Peak' }, { id: 'average', label: 'Average' }] },
-]
-```
-
-Nothing between the form and your adapter interprets them — SoundBase never
-learns what a detector is. That means **adding a knob to a shipped plugin needs
-no SoundBase release.** Build them in `open()` so ranges can come from the
-hardware you just identified.
-
-## Native code, and the gotcha that will cost you a week
-
-If your device needs a native library or a language runtime, read
-[docs/native-runtimes.md](docs/native-runtimes.md) before you design anything.
-The short version, learned the hard way on a USRP:
-
-**Put wedge-prone native work in a child process you can kill.** A blocking C
-library that owns a USB device can hang mid-call when someone trips over the
-cable. If that call is in your plugin's process, your plugin is gone and
-SoundBase restarts it. If it is in a child, you `SIGKILL` it, report a clean
-device error, and stay healthy. The process boundary between SoundBase and you
-protects *SoundBase*; you need your own boundary to protect *yourself*.
-
-## Documentation
-
-| | |
-|---|---|
-| [soundbase.md](docs/soundbase.md) | The app, the domain, and where your device lands. **Start here.** |
-| [architecture.md](docs/architecture.md) | Process model, lifecycle, supervision, versioning |
-| [getting-started.md](docs/getting-started.md) | Clone to first change, end to end |
-| [adapter-reference.md](docs/adapter-reference.md) | Every adapter method in detail |
-| [manifest-reference.md](docs/manifest-reference.md) | Every manifest field |
-| [http-contract.md](docs/http-contract.md) | The wire, for debugging with `curl` |
-| [testing.md](docs/testing.md) | The three checks, and faking hardware |
-| [running-in-soundbase.md](docs/running-in-soundbase.md) | Running a working tree with `SB_PLUGIN_DIRS`, the plugin manager, logs |
-| [native-runtimes.md](docs/native-runtimes.md) | Native libraries and bundled runtimes |
-| [publishing.md](docs/publishing.md) | Releases, the Lab, licensing |
-| [troubleshooting.md](docs/troubleshooting.md) | Symptom → cause |
-| [glossary.md](docs/glossary.md) | RF and SoundBase vocabulary |
-
-## Scripts
-
-| | |
-|---|---|
-| `npm start` | run the plugin |
-| `npm test` | contract tests through the real shell |
-| `npm run doctor` | is this plugin well-formed? with fixes for anything that isn't |
-| `npm run smoke` | boot as a child process, handshake, sweep — what the host does |
-| `npm run manifest` | validate `soundbase-plugin.json` against the contract schema |
-| `npm run rename <id>` | take an id, in all five places it appears |
-| `npm run pack:release` | build the zip users install, and boot-check it |
-| `npm run bump <x.y.z>` | move the version in every file that carries it; tag and push to release |
-
-## The specification
-
-The normative documents install with your dependencies:
-
-```
-node_modules/@soundbase/plugin-contract/spec/
-  soundbase-plugin.schema.json     validate your manifest against this
-  core.openapi.yaml                the core plugin API
-  spectrum-analyzer.openapi.yaml   the SpectrumAnalyzer module
-  channel-monitoring.openapi.yaml  the ChannelMonitoring module
-  property-control.openapi.yaml    the PropertyControl module
-```
-
-They are not a copy that might have gone stale — they ship inside the contract
-package, so they always describe the shell version your lockfile pins.
-
-Unknown modules and unknown properties are tolerated everywhere, deliberately:
-shipping a plugin must never require a SoundBase release.
-
-## Versioning
-
-Two version numbers that mean different things:
-
-- **`version`** in `soundbase-plugin.json` and `package.json` is *yours*. Semver
-  your plugin however you like.
-- **`template`** records what you started from and should be left alone:
-
-  ```json
-  "template": { "name": "soundbase-plugin-template", "version": "1.0.0" }
-  ```
-
-  It is correct forever *because* it goes stale. When a template release notes
-  a fix to the example error handling, this is what tells you whether it
-  applies to you. Do not bump it to match a template you have not merged.
-
-**`contract` is the only thing that governs compatibility.** Two plugins built
-from different template versions can speak exactly the same contract, and an
-old lineage does not make an incompatible plugin compatible.
-
-**One repository, one plugin.** A release is one zip carrying one
-`soundbase-plugin.json`, and a repository backs exactly one listing on the
-SoundBase Lab — a new version is a new release on that listing, and a second
-plugin needs its own repository.
-
-## Working with Claude
-
-[`CLAUDE.md`](CLAUDE.md) gives Claude Code and other coding agents the contract
-invariants, the file map, and worked prompts for the common tasks —
-implementing discovery, adding a control, wrapping a native driver. It is worth
-reading yourself.
-
-## Licence
-
-This template and `@soundbase/plugin-shell` are licensed under the **Business
-Source License 1.1** — source available, not open source. See `LICENSE` for the
-exact terms, and read the **Additional Use Grant**: it permits developing,
-distributing and operating plugins for SoundBase, including commercially, and
-does not permit using this code with anything that is not SoundBase.
-
-Each version converts automatically to the Change License named in `LICENSE` on
-its Change Date.
-
-Your own plugin code is yours; licence it however you like. The Additional Use
-Grant governs the parts you received under this licence.
-
-## Support
-
-Issues on this repository are for the template itself. For the plugin contract,
-device behaviour, or getting a plugin listed, see the SoundBase Lab.
+Installing this plugin runs code with your user account's privileges. Review
+[the source](https://github.com/kjungk/rsa306b-plugin) and the maintainer before
+installing. This is a community plugin, not a Tektronix-certified application.

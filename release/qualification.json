@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "plugin_id": "rsa306b",
+  "version": "0.1.0",
+  "source_commit": null,
+  "artifact_sha256": null,
+  "checks": {
+    "macos_hardware": {
+      "status": "pending",
+      "report": null,
+      "sha256": null
+    },
+    "windows_hardware": {
+      "status": "pending",
+      "report": null,
+      "sha256": null
+    },
+    "signal_generator": {
+      "status": "pending",
+      "report": null,
+      "sha256": null
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "source_run": "tune-01",
+  "source_pcap_sha256": "ba1293fb2155befe8ae4d84655ae4ea110e33babe25bd83ed210511fb4b6708b",
+  "source_packet": 2255,
+  "source_payload_offset": 32768,
+  "fixture_sha256": "037b7210ae2e93d19f6fe0b2e3b419589ef04b3ed1ac56973448c4ff6c96738f",
+  "descriptor": 31245,
+  "counter": 0,
+  "timestamp_ticks": "13397425594",
+  "status": 0,
+  "sample_count": 8178,
+  "center_hz": 610000000,
+  "firmware": "1.7",
+  "fpga": "2.1",
+  "hardware": 7
+}

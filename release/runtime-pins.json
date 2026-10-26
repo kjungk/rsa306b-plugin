@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "darwin-arm64": {
+    "minimum_macos": "14.0",
+    "libusb_version": "1.0.30",
+    "libusb_url": "https://github.com/libusb/libusb/releases/download/v1.0.30/libusb-1.0.30.tar.bz2",
+    "libusb_sha256": "fea36f34f9156400209595e300840767ab1a385ede1dc7ee893015aea9c6dbaf"
+  },
+  "win32-x64": {
+    "python_version": "3.14.9",
+    "python_url": "https://www.python.org/ftp/python/3.14.9/python-3.14.9-embed-amd64.zip",
+    "python_sha256": "3c01d7cfc666f746a6f064f60fb2156ab0ec464d3d738ab796371a46a9bb24a2"
+  }
+}

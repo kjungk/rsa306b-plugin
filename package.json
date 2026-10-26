@@ -1,8 +1,8 @@
 {
-  "name": "soundbase-plugin-template",
-  "version": "0.1.12",
-  "description": "Starting point for a SoundBase plugin: a synthetic spectrum analyzer served by the plugin shell.",
-  "license": "BUSL-1.1",
+  "name": "soundbase-plugin-rsa306b",
+  "version": "0.1.0",
+  "description": "Tektronix RSA306B spectrum analyzer for SoundBase Desktop on macOS arm64 and Windows x64.",
+  "license": "MIT",
   "type": "module",
   "main": "main.js",
   "engines": {
@@ -16,11 +16,16 @@
     "smoke": "node scripts/smoke.mjs",
     "rename": "node scripts/rename.mjs",
     "bump": "node scripts/bump-version.mjs",
-    "pack:release": "node scripts/pack-release.mjs"
+    "pack:release": "node scripts/pack-release.mjs",
+    "smoke:boot": "node scripts/smoke.mjs --boot-only",
+    "build:native": "python3 scripts/build-native.py",
+    "build:windows": "python3 scripts/assemble-runtime.py",
+    "test:packaging": "python3 -m unittest discover -s tests/packaging -p test_*.py",
+    "check:package": "node scripts/check-package.mjs"
   },
   "dependencies": {
-    "@soundbase/plugin-contract": "^0.12.2",
-    "@soundbase/plugin-shell": "^0.12.2"
+    "@soundbase/plugin-contract": "0.12.2",
+    "@soundbase/plugin-shell": "0.12.2"
   },
   "soundbase": {
     "template": {

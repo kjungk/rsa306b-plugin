@@ -1,5 +1,11 @@
 # Publishing a plugin
 
+> **RSA306B workflow:** this page preserves the official template's general
+> publishing guidance. This repository adds native builds and mandatory
+> exact-artifact hardware/generator qualification. Follow
+> [release/README.md](../release/README.md); a tag alone does not publish this
+> plugin, and no public release is qualified yet.
+
 How a plugin gets from your machine to a user's.
 
 ## The route

@@ -1,16 +1,3 @@
-# CI for a SoundBase plugin.
-#
-# Three things are checked, in increasing order of what they prove:
-#
-#   1. the manifest validates against the contract's own JSON schema
-#   2. the test suite passes
-#   3. the plugin actually boots, handshakes, and serves a trace over HTTP
-#
-# (3) is the one that catches what unit tests miss. A plugin that passes its
-# tests but cannot complete the stdout handshake is invisible to SoundBase,
-# and the failure looks like "my plugin does not appear" with nothing in the
-# logs to explain it.
-#
 name: CI
 
 on:
@@ -18,58 +5,147 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  contract:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # If your plugin talks to hardware, the OS matrix is still worth having:
-        # path handling, process termination and line endings differ, and those
-        # are exactly the bugs that reach users first.
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-14, windows-2025]
         node: [22, 24]
-
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          # `cache: npm` is a hard error when there is no lockfile to key on,
-          # and a repository made from this template has none until someone
-          # commits their first install. Cache from then on, not before.
-          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - run: npm ci
+      - run: npm run doctor
+      - run: npm run manifest
+      - run: npm test
+      - run: npm run smoke
+      - run: python -m unittest discover -s tests/packaging -p "test_*.py"
 
-      - name: Install
-        shell: bash
-        # `npm ci` needs a lockfile; `npm install` writes one. Commit the
-        # lockfile it produces and every later run takes the reproducible path.
-        run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
-      - name: Check the plugin is well-formed
-        run: npm run doctor
-
-      - name: Validate the manifest against the contract schema
-        run: npm run manifest
-
-      - name: Test
-        run: npm test
-
-  boot:
-    # Proving the plugin starts is cheap and independent of the test matrix.
-    runs-on: ubuntu-latest
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # GitHub's public macos-14 image is arm64; assert that below rather
+          # than accidentally accepting an Intel host when runner labels change.
+          - os: macos-14
+            target: darwin-arm64
+          - os: windows-2025
+            target: win32-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
-      - name: Install
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Verify native target
+        env:
+          EXPECTED_TARGET: ${{ matrix.target }}
+        run: node -e "if(process.platform+'-'+process.arch!==process.env.EXPECTED_TARGET)process.exit(1)"
+      - run: npm ci
+      - name: Build arm64 worker and libusb, run offline CTest
+        if: matrix.target == 'darwin-arm64'
+        run: python scripts/build-native.py
+      - name: Assemble pinned Windows Python
+        if: matrix.target == 'win32-x64'
+        run: python scripts/assemble-runtime.py
+      - name: Run integration tests with the assembled target runtime
+        run: npm test
+      - name: Exercise actual target worker in mock mode
+        run: node scripts/check-package.mjs .
+      - name: Preserve native modes in artifact transport
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: tar -cf "build/runtime-$TARGET.tar" -C runtime "$TARGET"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: runtime-${{ matrix.target }}
+          path: build/runtime-${{ matrix.target }}.tar
+          if-no-files-found: error
+
+  package:
+    needs: [contract, runtime]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - run: npm ci --omit=dev
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: runtime-*
+          path: build/runtime-artifacts
+          merge-multiple: true
+      - name: Assemble both targets
+        run: |
+          mkdir -p runtime
+          tar -xf build/runtime-artifacts/runtime-darwin-arm64.tar -C runtime
+          tar -xf build/runtime-artifacts/runtime-win32-x64.tar -C runtime
+      - name: Pack one runnable Lab ZIP
         shell: bash
         run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
-      - name: Boot, handshake, and serve a trace
-        run: npm run smoke
+          VERSION=$(node -p "require('./soundbase-plugin.json').version")
+          npm run pack:release -- --expect "$VERSION"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: plugin-zip
+          path: |
+            dist/*.zip
+            dist/*.sha256
+            dist/package-report.json
+          if-no-files-found: error
+
+  packaged-target:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - uses: actions/download-artifact@v8
+        with:
+          name: plugin-zip
+          path: dist
+      - name: Validate and extract the immutable archive
+        shell: bash
+        run: python scripts/verify-release.py dist/*.zip --extract "build/package with spaces é" --output build/target-package-report.json
+      - name: Make the Mac payload read-only
+        if: runner.os == 'macOS'
+        run: chmod -R a-w "build/package with spaces é/rsa306b"
+      - name: Exercise the extracted real worker in mock mode
+        run: node scripts/check-package.mjs "build/package with spaces é/rsa306b"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-check-${{ matrix.os }}
+          path: build/target-package-report.json

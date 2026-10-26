@@ -7,3 +7,10 @@ runtime/
 # CPython bytecode, regenerated per interpreter version
 __pycache__/
 *.pyc
+
+# Local build/test/measurement outputs
+build/
+native/build*/
+.cache/
+.evidence/
+.DS_Store

@@ -5,6 +5,10 @@ import * as adapter from './adapter.js';
 // module factories adapter.js exports and nothing else, so a plugin that only
 // serves spectrum analyzers, or only monitored devices, uses this same file.
 class Plugin extends SoundBasePlugin {
+  // Documented lifecycle-hook exception: native prerequisites are plugin-wide.
+  async init(config) { adapter.init?.(this, config); }
+  async configUpdated(config) { adapter.configUpdated?.(this, config); }
+  async destroy() { await adapter.destroy?.(); }
   async discoverDevices() {
     return adapter.discoverDevices?.(this.config) ?? [];
   }

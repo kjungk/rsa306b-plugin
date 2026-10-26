@@ -1,5 +1,15 @@
 # Documentation
 
+## RSA306B implementation
+
+- [Architecture and backend contracts](rsa306b-architecture.md)
+- [Validation and pending hardware/generator gates](rsa306b-validation.md)
+- [Build, immutable candidate and publication workflow](../release/README.md)
+- [Source and dependency provenance](../UPSTREAM.md)
+
+The guides below originate in the official SoundBase template. For this
+plugin's commands and release gates, use the RSA306B pages above.
+
 ## If you are new, read these three, in order
 
 1. **[soundbase.md](soundbase.md)** — what SoundBase is, what the people using
