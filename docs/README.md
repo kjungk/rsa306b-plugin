@@ -10,6 +10,7 @@
 - [Architecture and backend contracts](rsa306b-architecture.md)
 - [Validation and pending hardware/generator gates](rsa306b-validation.md)
 - [Mac hardware test results from 26 October 2026](macos-validation-2026-10-26.md)
+- [Native Windows USB access and SignalVu coexistence investigation](windows-native-investigation-2026-10-26.md)
 - [Build, immutable candidate and publication workflow](../release/README.md)
 - [Source and dependency provenance](../UPSTREAM.md)
 
