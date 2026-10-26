@@ -16,14 +16,16 @@ parents can be given at once.
 
 ```bash
 # macOS — the plugin is ~/CODE/my-plugin
-SB_PLUGIN_DIRS="$HOME/CODE" open -a "SoundBase Desktop"
+open -a "SoundBase Desktop" --env "SB_PLUGIN_DIRS=$HOME/CODE"
 ```
 
 Point it at the *parent* of your plugin folder, not at the plugin folder
 itself: each direct child with a `soundbase-plugin.json` is one plugin.
 
-Quit SoundBase Desktop before running this. `open -a` hands the variable to a
-newly started app, not to one that is already running.
+Quit SoundBase Desktop before running this. `open --env` explicitly passes the
+variable to a newly started app, not to one that is already running. Merely
+setting the variable in front of `open -a` did not pass it through on the macOS
+26.6.2 acceptance host.
 
 **The dependencies have to be there.** SoundBase runs `main.js` as-is; it does
 not install anything. A folder without `node_modules/@soundbase/plugin-shell`

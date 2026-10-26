@@ -1,5 +1,9 @@
 # Implementation and validation record — 2026-10-26
 
+For subsequent tests of the clean-source CI package, see the
+[Mac hardware validation results](macos-validation-2026-10-26.md). The local
+candidate and Windows results recorded below refer to a different ZIP.
+
 The official-template RSA306B implementation is complete as a **development
 candidate**. Public release qualification is pending. Nothing was installed into
 SoundBase, published to GitHub/Lab, or changed in the original `tektronix-ui`

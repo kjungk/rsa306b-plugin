@@ -21,6 +21,9 @@ continuous monitoring across the entire span.
 
 ## Using the plugin
 
+Read the [user manual](docs/user-manual.md) for installation, first-scan steps,
+platform controls, troubleshooting and evaluation-package instructions.
+
 Once the release is qualified and approved, install **Tektronix RSA306B** from
 SoundBase Lab. SoundBase supplies the JavaScript runtime; recipients do not need
 Node, Python, a compiler or Homebrew. Windows users must separately install the
@@ -77,7 +80,7 @@ of this checkout before starting Desktop. This starts a real plugin unless an
 explicit mock environment variable is set:
 
 ```sh
-SB_PLUGIN_DIRS="$(dirname "$PWD")" open -a "SoundBase Desktop"
+open -a "SoundBase Desktop" --env "SB_PLUGIN_DIRS=$(dirname "$PWD")"
 ```
 
 Disable the old `rsa306b-native` or `rsa306b-windows` plugin while using this one.
