@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "plugin_id": "rsa306b",
+  "version": "0.1.0",
+  "artifact_sha256": "8c6cc6403b6f13e1af82ecc0a9c66ce647eb25c6b771247041d0f3731c3ffc83",
+  "source_commit": "bc2888395e451c37c233251b16baeefe87bc55e2",
+  "release_channel": "beta",
+  "ci_run_id": 40515379299,
+  "status": "passed",
+  "scope": "macOS arm64 release acceptance",
+  "candidate_checks": {
+    "acquisition": {
+      "status": "passed",
+      "fresh_traces": 17,
+      "evidence_sha256": "d3c288f50c384afb46ac6decc1eab172f65373d39feee7d6c09f3c19808a5bb2"
+    },
+    "controls": {
+      "status": "passed",
+      "fresh_traces": 25,
+      "evidence_sha256": "f2f273d288dccf9fbe75c6a6487aa6898440e259d005acb3c161e87f4e903fc4"
+    },
+    "lifecycle": {
+      "status": "passed",
+      "fresh_traces": 12,
+      "evidence_sha256": "fd5a511bb9cbb2d78d3fd7d6841dfa6a9da4e2a2db60e5a80d3535c524237aa0"
+    },
+    "desktop": {
+      "status": "passed",
+      "checks": [
+        "live plot",
+        "waterfall",
+        "project reload",
+        "Desktop restart",
+        "enable/disable",
+        "normal exit and worker cleanup"
+      ],
+      "evidence_sha256": "579a2e04a17a785da01607836cfc3fc0264060460d5bcdca9ef364950d4fc704"
+    },
+    "ci_package_mock": {
+      "status": "passed",
+      "ci_run_id": 40515379299
+    },
+    "package_integrity": {
+      "status": "passed",
+      "unchanged_files": 966,
+      "evidence_sha256": "f54d055958a913d20001a83cbe92202f1ec9aa2fcdc9370212344453440d3e94"
+    }
+  },
+  "carried_forward_checks": {
+    "physical_disconnect_reconnect": "passed on earlier build",
+    "thirty_minute_soak": "passed on earlier build",
+    "tested_artifact_sha256": "967918a23ca964288ea9040c2c00be9266f3dc8a64113b28855b92ec38b38219",
+    "evidence_sha256": [
+      "952819c10e6a25581d5d14eb0e04bc9eb93e5c2ccbd6c66ef7f39e00fe704e0b",
+      "f78430a183eee93ddc1eb05e8a289fa762f6a5454cfa69b79b57d244f8cc5af0"
+    ]
+  },
+  "carry_forward_review": "The existing endurance and disconnect checks are retained as prior validation. Acquisition, controls and lifecycle were subsequently tested after the shared transport refactor and again on this candidate. Current calibration, FFT, adapter and USB acquisition behavior is unchanged from that later hardware-tested source. Documentation, test cleanup and discovery wording do not require repeating the endurance campaign.",
+  "known_behavior": "Forced Desktop termination can leave the plugin running; documented targeted recovery passed in prior testing. Normal exit and disable cleanup passed on this candidate.",
+  "installation_scope": "Extracted CI ZIP loaded by SoundBase Desktop through SB_PLUGIN_DIRS; Lab installation follows listing approval."
+}

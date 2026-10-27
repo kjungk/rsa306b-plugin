@@ -25,3 +25,9 @@ an acquisition process can remain running; the manual describes recovery.
 This community beta does not support Intel Macs, Windows arm64 or other native
 hardware revisions. Qualification summaries and the ZIP checksum accompany
 the download.
+
+During Windows testing, SoundBase Desktop 2.26.0 encountered a black screen
+while creating a project. Its HTTP-client assertion also occurred without this
+plugin loaded. The existing-project retry passed, including plot, waterfall,
+project reopen, plugin enable/disable and normal shutdown. The plugin does not
+fix that host issue.

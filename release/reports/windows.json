@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "plugin_id": "rsa306b",
+  "version": "0.1.0",
+  "artifact_sha256": "8c6cc6403b6f13e1af82ecc0a9c66ce647eb25c6b771247041d0f3731c3ffc83",
+  "source_commit": "bc2888395e451c37c233251b16baeefe87bc55e2",
+  "release_channel": "beta",
+  "ci_run_id": 40515379299,
+  "status": "passed",
+  "scope": "Windows x64 release acceptance",
+  "candidate_checks": {
+    "acquisition": {
+      "status": "passed",
+      "fresh_traces": 17,
+      "evidence_sha256": "f94adaa01389829fac0b350fb6ee126a213e8deb8e429b2c698f81fb7001b5f6"
+    },
+    "controls": {
+      "status": "passed",
+      "fresh_traces": 25,
+      "evidence_sha256": "7b9b7013599f7abe8fa0b33d05a760cc5182a39d36776a6405cfcc00c17f095a"
+    },
+    "lifecycle": {
+      "status": "passed",
+      "fresh_traces": 12,
+      "evidence_sha256": "1f858fcc0b77b234307c1014046bedbaf5b0d25b06e1a403bf67dd536e8253fb"
+    },
+    "normal_user": {
+      "status": "passed",
+      "administrator": false,
+      "scope": "Package mocks and all hardware suites ran under the logged-in limited token."
+    },
+    "package_mock": {
+      "status": "passed",
+      "backends": [
+        "native",
+        "tektronix-api"
+      ],
+      "evidence_sha256": "6d937e279eab552a5308764e35fd5780d1a8ae8f7e5cadf8d78e651027ed7591"
+    },
+    "desktop": {
+      "status": "passed",
+      "host_version": "2.26.0",
+      "checks": [
+        "live plot",
+        "waterfall",
+        "project reopen",
+        "enable/disable",
+        "normal exit and worker cleanup"
+      ],
+      "confirmation": "Desktop interactions confirmed by the operator; process cleanup verified remotely.",
+      "evidence_sha256": "ca3da8da4d4f0c4039019ff19bfd1e64c5e4f3133a3629b56727d6ed89ca6aec"
+    },
+    "package_integrity": {
+      "status": "passed",
+      "unchanged_files": 966,
+      "evidence_sha256": "f54d055958a913d20001a83cbe92202f1ec9aa2fcdc9370212344453440d3e94"
+    }
+  },
+  "carried_forward_checks": {
+    "physical_disconnect_reconnect": "passed on earlier build",
+    "thirty_minute_soak": "passed on earlier build",
+    "sequential_signalvu_handoff": "passed; operator confirmed live SignalVu spectrum after native cleanup",
+    "tested_artifact_sha256": "acc6deaab1cf32c8730008804ec1b53a049120f2686770bbc217d601a3ea0713",
+    "evidence_sha256": [
+      "4dc9c6fdf2241ef6098897673d7ebb664a4188bf592046407dac90de8ab29374",
+      "d8fabe3545a2157d2073ef664ef0e7ca7a87d157d3a21176dcfae4febe3202aa",
+      "8407c4511d21438774667a5fd9c5dbac5f3dab9497fa1b3828345b0c35158464"
+    ]
+  },
+  "carry_forward_review": "The earlier endurance, reconnect and SignalVu checks are retained as prior validation. The MSVC CI worker subsequently passed acquisition, controls and lifecycle checks, repeated on this candidate under a limited token. Transport, acquisition, calibration and spectrum behavior remain unchanged from the later hardware-tested source; build metadata decoding and discovery wording changed.",
+  "installation_scope": "Exact candidate installed in the normal local plugin folder and loaded with SB_PLUGIN_DIRS unset. Existing supported Tektronix USB driver installation, with no driver change. Fresh Windows installation and other driver versions are not claimed. Lab installation is deferred.",
+  "known_behavior": "SignalVu and other analyzer applications must be closed while the plugin acquires. After forced host termination, use the documented recovery procedure.",
+  "host_observation": "An initial new-project attempt encountered a SoundBase 2.26.0 black screen with an Undici assert(!this.paused) error. The host error also occurred without this plugin loaded. The existing-project retry passed with no new assertion; this release does not fix the host networking issue."
+}

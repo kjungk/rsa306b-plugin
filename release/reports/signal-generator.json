@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "plugin_id": "rsa306b",
+  "version": "0.1.0",
+  "artifact_sha256": "8c6cc6403b6f13e1af82ecc0a9c66ce647eb25c6b771247041d0f3731c3ffc83",
+  "source_commit": "bc2888395e451c37c233251b16baeefe87bc55e2",
+  "release_channel": "beta",
+  "ci_run_id": 40515379299,
+  "status": "passed",
+  "scope": "Acceptance of completed signal-generator and modulated-signal validation for the 0.1.0 beta",
+  "basis": "carried_forward",
+  "acceptance": "The completed conducted measurements are accepted for this release. Recorded numerical comparisons passed on both platforms. The relevant calibration and spectrum-processing source hashes still match the validated implementation. No new generator acquisition is claimed for this ZIP.",
+  "source_files_sha256": {
+    "native/src/spectrum.cpp": "afd6db9287ee64391796a9e7d078154211f633b7cec7aeeea30ab8fc85fb9d5f",
+    "native/src/calibration.cpp": "172b54e519ea13eaa55aef9a20e290a0817800d42213959033fafe086e2792ba",
+    "native/src/protocol.cpp": "1c1c455fc66982e372a649a8b7c9f26e6aaa740285489fb31c35617268d6b4be",
+    "native/include/rsa/core.hpp": "a3816c0ca5b6702f37ca6aa9896bc0678d3bda5b905cfbcf0aa777e5bc26068e",
+    "native/include/rsa/calibration.hpp": "35f872cacd3b6519083766b9e18826408c2e8e3793c44db0b9ef0a0965f06f63"
+  },
+  "evidence_sha256": [
+    "b88f707a17ca300563a6b952549265030acb7cf7444754eaf593f28d85edca12",
+    "68f6c745a09184496d77d84d9ce2689954bc1726a65f42d4312ebc339561db18"
+  ],
+  "evidence_handling": "Detailed reports, raw samples, source identities and device calibration remain private."
+}

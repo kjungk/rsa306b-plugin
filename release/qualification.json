@@ -2,23 +2,24 @@
   "schema_version": 1,
   "plugin_id": "rsa306b",
   "version": "0.1.0",
-  "source_commit": null,
-  "artifact_sha256": null,
+  "source_commit": "bc2888395e451c37c233251b16baeefe87bc55e2",
+  "artifact_sha256": "8c6cc6403b6f13e1af82ecc0a9c66ce647eb25c6b771247041d0f3731c3ffc83",
+  "ci_run_id": 40515379299,
   "checks": {
     "macos_hardware": {
-      "status": "pending",
-      "report": null,
-      "sha256": null
+      "status": "passed",
+      "report": "reports/macos.json",
+      "sha256": "b810b5d315349c8be7db0dfa182c080787f93fee796cc675456486ca4912fa28"
     },
     "windows_hardware": {
-      "status": "pending",
-      "report": null,
-      "sha256": null
+      "status": "passed",
+      "report": "reports/windows.json",
+      "sha256": "90e0c00565eb1162cebc61519e34aea5603e7b3cc16c6517bbf7e3b8550ed10d"
     },
     "signal_generator": {
-      "status": "pending",
-      "report": null,
-      "sha256": null
+      "status": "passed",
+      "report": "reports/signal-generator.json",
+      "sha256": "e1002b600f7531624083360a544465c5f3978bf6ca93330d13001db2201f786a"
     }
   }
 }
