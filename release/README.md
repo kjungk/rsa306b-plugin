@@ -11,7 +11,8 @@ RSA API. A successful mock test is not hardware or amplitude-accuracy qualificat
 Use Python 3.11+ and Node 20+. The Mac build additionally needs Apple command-line
 tools and CMake 3.25+. Run it on Apple silicon; it produces arm64-only binaries
 with a macOS 14.0 minimum. The Windows build needs an x64 host, Visual Studio
-2022 C++ tools, a Windows SDK and CMake 3.25+. It uses the static MSVC runtime
+2022 or newer C++ tools, a Windows SDK and CMake 3.25+ (4.2+ for Visual Studio
+2026). CI uses CMake 4.2.3. It uses the static MSVC runtime
 and Windows inbox libraries, with no Tektronix or Cypress SDK library linkage.
 Dependencies are pinned by SHA-256 in
 `release/runtime-pins.json`. Supplying the matching archives makes assembly
@@ -32,7 +33,11 @@ accepts `--cmake PATH` and `--ctest PATH` (or `CMAKE_EXECUTABLE` /
 assets and are not committed. Native builds run offline CTest tests. The Mac
 build checks architecture, load paths and ad-hoc signatures. The Windows build
 checks x64 architecture and rejects non-inbox DLL dependencies. Use `--generator`
-to select another installed Visual Studio CMake generator when needed.
+to select a particular installed Visual Studio CMake generator when needed.
+Otherwise the builder queries `vswhere` for x64 C++ installations, matches their
+versions to CMake's advertised generators, and selects the newest compatible
+instance. It does not assume that a runner image name implies a particular
+Visual Studio release.
 
 For a separately built Windows worker, including a development cross-build,
 `scripts/assemble-runtime.py --native-worker PATH --python-zip PATH` assembles

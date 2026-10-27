@@ -65,7 +65,10 @@ jobs:
         run: python scripts/build-native.py
       - name: Build x64 native worker, run offline CTest, assemble fallback Python
         if: matrix.target == 'win32-x64'
-        run: python scripts/build-native-windows.py
+        run: |
+          python -m pip install cmake==4.2.3
+          $cmakeBin = python -c "import cmake; print(cmake.CMAKE_BIN_DIR)"
+          python scripts/build-native-windows.py --cmake "$cmakeBin/cmake.exe" --ctest "$cmakeBin/ctest.exe"
       - name: Run integration tests with the assembled target runtime
         run: npm test
       - name: Exercise actual target worker in mock mode

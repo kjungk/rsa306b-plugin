@@ -8,6 +8,48 @@ import unittest
 spec = importlib.util.spec_from_file_location('runtime_common', Path(__file__).resolve().parents[2] / 'scripts/runtime-common.py')
 common = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(common)
+build_spec = importlib.util.spec_from_file_location('windows_build', Path(__file__).resolve().parents[2] / 'scripts/build-native-windows.py')
+windows_build = importlib.util.module_from_spec(build_spec)
+build_spec.loader.exec_module(windows_build)
+
+
+class VisualStudioSelectionTests(unittest.TestCase):
+    generators = [{'name': 'Visual Studio 17 2022'}, {'name': 'Visual Studio 18 2026'}, {'name': 'Ninja'}]
+
+    @staticmethod
+    def instance(version, **kwargs):
+        return {'installationVersion': version, 'installationPath': f'C:/Build tools/{version}',
+                'isComplete': True, 'isLaunchable': True, **kwargs}
+
+    def test_runner_with_only_new_visual_studio_does_not_request_old_year(self):
+        installed = self.instance('18.0.100.1')
+        generator, instance = windows_build.select_visual_studio([installed], self.generators)
+        self.assertEqual(generator, 'Visual Studio 18 2026')
+        self.assertEqual(instance['installationPath'], installed['installationPath'])
+
+    def test_newest_compatible_installation_and_explicit_override(self):
+        older, newer = self.instance('17.14.100.1'), self.instance('18.2.100.1')
+        unrecognized = self.instance('19.0.100.1')
+        incomplete = self.instance('18.3.100.1', isComplete=False)
+        instances = [older, newer, unrecognized, incomplete]
+        self.assertEqual(windows_build.select_visual_studio(instances, self.generators)[1], newer)
+        self.assertEqual(windows_build.select_visual_studio(instances, self.generators, 'Visual Studio 17 2022')[1], older)
+
+    def test_new_generator_year_comes_from_cmake_capabilities(self):
+        generators = self.generators + [{'name': 'Visual Studio 19 2030'}]
+        self.assertEqual(windows_build.select_visual_studio([self.instance('19.0.1.1')], generators)[0], 'Visual Studio 19 2030')
+
+    def test_missing_or_incompatible_toolchain_reports_actionable_failure(self):
+        for instances, generators, requested in [
+            ([], self.generators, None),
+            ([self.instance('18.0.1.1')], self.generators[:1], None),
+            ([self.instance('18.0.1.1')], self.generators, 'Visual Studio 17 2022'),
+            ([self.instance('18.0.1.1', isLaunchable=False)], self.generators, None),
+        ]:
+            with self.subTest(requested=requested, instances=instances), self.assertRaisesRegex(ValueError, 'Install the x64 C\\+\\+ tools'):
+                windows_build.select_visual_studio(instances, generators, requested)
+        with self.assertRaisesRegex(ValueError, 'does not advertise'):
+            windows_build.select_visual_studio([], self.generators, 'Ninja')
 
 
 def pe(import_name=b'KERNEL32.dll'):
