@@ -10,7 +10,12 @@ runtime builder supplies its pinned source, notices and relocatable arm64 build.
 
 The direct USB implementation accepts only RSA306B **HW7, firmware 1.7,
 FPGA 2.1**, with one attached analyzer and one session attempt per worker.
-Its per-user lock preserves cooperation with the original RSA Monitor worker.
+On macOS its per-user lock preserves cooperation with RSA Monitor. On Windows
+it opens the existing RSA3USB3 driver through SetupAPI/DeviceIoControl and shares
+a named mutex with the plugin's optional vendor API backend. The worker links
+only Windows inbox libraries; it does not load RSA_API.dll or replace the USB
+driver. Sixteen 262144-byte requests preserve submission order, and teardown
+retains pending request storage and ownership until completion or process exit.
 Discovery reads descriptors; `probe` opens and initializes the selected unit.
 
 ## Factory conversion status

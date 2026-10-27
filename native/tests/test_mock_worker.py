@@ -85,15 +85,17 @@ class MockWorkerTests(unittest.TestCase):
                 self.assertTrue(rows[-1]['complete'])
 
     def test_stop_and_parent_eof_wait_for_cleanup(self):
-        for control in ('stop\n', None):
+        for control in ('stop\n', 'stop\r\n', None):
             with self.subTest(control=control):
                 process = subprocess.Popen(self.sweep(count=1000000)+['--stdin-control'],
-                                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 try:
                     while decode(process.stdout.readline())['type'] != 'sweep_end':
                         pass
                     if control is not None:
-                        process.stdin.write(control)
+                        # Send exact protocol bytes: text mode on Windows
+                        # translates explicit CRLF into CR-CR-LF.
+                        process.stdin.write(control.encode('ascii'))
                         process.stdin.flush()
                     process.stdin.close()
                     process.stdin = None
@@ -104,3 +106,11 @@ class MockWorkerTests(unittest.TestCase):
                     if process.poll() is None:
                         process.kill()
                         process.wait()
+
+    def test_invalid_control_cannot_silently_continue_acquisition(self):
+        for control in ('start\n', 'x' * 4097):
+            with self.subTest(length=len(control)):
+                result = subprocess.run(self.sweep(count=1000000) + ['--stdin-control'],
+                                        input=control, capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual(decode(result.stderr)['code'], 'invalid_control')

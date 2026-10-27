@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createIO } from '../driver/native/worker.js';
+import { createIO, workerPath } from '../driver/native/worker.js';
 import { RSAAdapter } from '../driver/native/adapter.js';
 const candidates = [process.env.SB_RSA306B_NATIVE_TEST_WORKER,
-  fileURLToPath(new URL('../runtime/darwin-arm64/rsa306',import.meta.url)),
+  workerPath,
   fileURLToPath(new URL('../native/build/rsa306',import.meta.url))].filter(Boolean);
-const executable = process.platform === 'darwin' && process.arch === 'arm64' ? candidates.find(existsSync) : undefined;
-const skip = executable ? false : 'Native arm64 worker absent; real-worker tests MUST run on the macOS artifact job.';
+const executable = ['darwin-arm64','win32-x64'].includes(`${process.platform}-${process.arch}`) ? candidates.find(existsSync) : undefined;
+const skip = executable ? false : 'Native worker absent; real-worker tests MUST run on both platform artifact jobs.';
 const io = createIO({nativeWorkerPath:executable},{nativeMock:true});
 
 test('real native planner clamps minimum RBW across the full 9 kHz–6.2 GHz range', {skip}, async () => {

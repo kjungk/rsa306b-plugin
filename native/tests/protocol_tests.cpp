@@ -1,6 +1,7 @@
 #include "rsa/protocol.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -10,6 +11,9 @@
 using namespace rsa::wire;
 namespace {
 void require(bool ok,const char* message) {if(!ok)throw std::runtime_error(message);}
+const char* fixture(const char* name,const char* fallback) {
+    const auto value=std::getenv(name);return value && *value?value:fallback;
+}
 void rejected(const std::function<void()>& fn) {
     try {fn();} catch(const rsa::Error&) {return;} throw std::runtime_error("Invalid protocol data accepted");
 }
@@ -71,7 +75,7 @@ void frequencies() {
 }
 void full_range_fixtures() {
     // Each row is independently decoded Windows USB evidence, with PCAP hash.
-    std::ifstream file(RSA_ROUTE_FIXTURE);std::string line;std::getline(file,line);
+    std::ifstream file(fixture("RSA_ROUTE_FIXTURE",RSA_ROUTE_FIXTURE));std::string line;std::getline(file,line);
     std::size_t count=0;
     while(std::getline(file,line)) {
         std::stringstream input(line);std::string item;std::vector<std::string> columns;
@@ -129,7 +133,7 @@ void collector() {
     gap.push(frame(11,4,32712));require(gap.complete(),"Recovery after sample gap");
     FrameCollector wrap(11,8192);wrap.push(frame(11,0xffffffff,100));wrap.push(frame(11,0,8278));
     require(wrap.complete() && wrap.result.gap_events==0,"32-bit frame counter rollover");
-    std::ifstream in(RSA_FIXTURE,std::ios::binary);Bytes bytes((std::istreambuf_iterator<char>(in)),{});
+    std::ifstream in(fixture("RSA_FIXTURE",RSA_FIXTURE),std::ios::binary);Bytes bytes((std::istreambuf_iterator<char>(in)),{});
     const auto f=footer(bytes);require(f.descriptor==31245 && f.counter==0 && f.timestamp==13397425594ULL && f.status==0,"Real captured footer fixture");
 }
 void real_fft() {

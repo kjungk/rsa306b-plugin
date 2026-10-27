@@ -102,7 +102,7 @@ try {
     copyTree(join(ROOT, 'native', dir), join(stage, 'sources/native', dir), rel =>
       !rel.split('/').includes('__pycache__') && /\.(cpp|hpp|h|py|json|csv|bin|txt)$/.test(rel));
   }
-  for (const name of ['build-native.py', 'runtime-common.py']) copy(join(ROOT, 'scripts', name), join(stage, 'sources/scripts', name));
+  for (const name of ['build-native.py', 'build-native-windows.py', 'assemble-runtime.py', 'runtime-common.py']) copy(join(ROOT, 'scripts', name), join(stage, 'sources/scripts', name));
   copy(join(ROOT, 'release/runtime-pins.json'), join(stage, 'sources/release/runtime-pins.json'));
   copy(join(ROOT, 'LICENSE'), join(stage, 'sources/LICENSE'));
   const content = createHash('sha256');

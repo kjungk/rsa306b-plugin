@@ -14,7 +14,7 @@ if (!portable && !['darwin-arm64', 'win32-x64'].includes(target)) {
 }
 const metadata = JSON.parse(readFileSync(join(root, 'soundbase-plugin.json'), 'utf8'));
 const token = 'rsa306b-package-check';
-async function check(mock) {
+async function check(mock, windowsBackend = 'native') {
   const env = { ...process.env, SB_PLUGIN_TOKEN: token };
   delete env.SB_RSA306B_MOCK;
   delete env.SB_RSA306B_NATIVE_MOCK;
@@ -58,7 +58,7 @@ async function check(mock) {
     // A clean boot check deliberately does not request enumeration or initialize
     // drivers: it proves package installation does not require attached hardware.
     if (mock) {
-      await api('/config', 'PUT', { values: {} });
+      await api('/config', 'PUT', { values: { windowsBackend } });
       let devices = [];
       for (let i = 0; i < 40 && !devices.length; i++) {
         devices = (await api('/devices')).devices;
@@ -71,6 +71,9 @@ async function check(mock) {
       });
       assert.equal(config.startHz, 9000);
       assert.equal(config.stopHz, 6.2e9);
+      assert.ok(windowsBackend === 'tektronix-api'
+        ? Number.isFinite(config.controls.refLevelDbm)
+        : Number.isFinite(config.controls.attenuationDb));
       await api(`${devicePath}/sweep/start`, 'POST');
       let trace;
       for (let i = 0; i < 50 && !trace; i++) {
@@ -105,4 +108,7 @@ async function check(mock) {
 }
 await check(false);
 await check(true);
-console.log(JSON.stringify({ status: 'passed', target, mode: portable ? 'portable-mock' : 'real-worker-mock', plugin_id: metadata.id, version: metadata.version }));
+if (!portable && target === 'win32-x64') await check(true, 'tektronix-api');
+console.log(JSON.stringify({ status: 'passed', target, mode: portable ? 'portable-mock' : 'real-worker-mock',
+  backends: !portable && target === 'win32-x64' ? ['native', 'tektronix-api'] : ['native'],
+  plugin_id: metadata.id, version: metadata.version }));

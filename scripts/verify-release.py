@@ -33,10 +33,10 @@ def safe_name(name):
 
 def require_x64(data):
     if len(data) < 64 or data[:2] != b'MZ':
-        raise ValueError('Python is not a PE executable')
+        raise ValueError('Windows runtime binary is not a PE executable')
     pos = struct.unpack_from('<I', data, 0x3c)[0]
     if pos + 6 > len(data) or data[pos:pos + 4] != b'PE\0\0' or struct.unpack_from('<H', data, pos + 4)[0] != 0x8664:
-        raise ValueError('Python is not Windows x64')
+        raise ValueError('Windows runtime binary is not Windows x64')
 
 
 def require_arm64(data):
@@ -71,9 +71,10 @@ def verify_archive(path, extract=None):
                     'runtime/darwin-arm64/runtime.json', 'runtime/win32-x64/runtime.json',
                     'runtime/darwin-arm64/rsa306', 'runtime/darwin-arm64/libusb-1.0.0.dylib',
                     'runtime/darwin-arm64/sources/libusb-1.0.30.tar.bz2',
-                    'runtime/win32-x64/python.exe', 'runtime/win32-x64/LICENSE.txt',
+                    'runtime/win32-x64/python.exe', 'runtime/win32-x64/rsa306.exe', 'runtime/win32-x64/LICENSE.txt',
                     'driver/windows/worker.py', 'sources/native/CMakeLists.txt',
-                    'sources/scripts/build-native.py', 'sources/release/runtime-pins.json']
+                    'sources/scripts/build-native.py', 'sources/scripts/build-native-windows.py',
+                    'sources/scripts/assemble-runtime.py', 'sources/release/runtime-pins.json']
         for name in required:
             if name not in payload:
                 raise ValueError(f'Missing release file: {name}')
@@ -111,6 +112,7 @@ def verify_archive(path, extract=None):
         require_arm64(payload['runtime/darwin-arm64/rsa306'])
         require_arm64(payload['runtime/darwin-arm64/libusb-1.0.0.dylib'])
         require_x64(payload['runtime/win32-x64/python.exe'])
+        require_x64(payload['runtime/win32-x64/rsa306.exe'])
         if not next(e for e in entries if e.filename == 'rsa306b/runtime/darwin-arm64/rsa306').external_attr >> 16 & 0o111:
             raise ValueError('Native worker has lost its executable permission')
         if extract is not None:

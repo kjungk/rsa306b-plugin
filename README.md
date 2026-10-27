@@ -1,18 +1,20 @@
 # Tektronix RSA306B for SoundBase
 
 A spectrum-analyzer plugin built from the official SoundBase template, with a
-native Apple silicon backend and a Windows backend using the Tektronix API.
+shared native acquisition on Apple silicon and Windows x64. Windows retains an
+optional Tektronix API fallback.
 
 **Development candidate — not yet qualified for public release.** The intended
-range is **9 kHz–6.2 GHz** on both platforms. New macOS LF factory correction,
-real-device acceptance of this package, and independent signal-generator
-measurements must pass before publication. Synthetic tests do not establish RF
-accuracy. See [validation and remaining gates](docs/rsa306b-validation.md).
+range is **9 kHz–6.2 GHz** on both platforms. Practical generator and modulated
+RF measurements are complete in the original implementation; the
+[RF validation record](docs/rf-validation-2026-10-27.md) bridges that evidence.
+Final-package acceptance on both platforms remains pending. Synthetic tests do
+not establish RF accuracy. See [validation and remaining gates](docs/rsa306b-validation.md).
 
 | Platform | Runtime | Initial hardware qualification |
 | --- | --- | --- |
 | macOS 14+, arm64 | Bundled C++ worker and libusb | RSA306B HW7, firmware 1.7, FPGA 2.1 |
-| Windows x64 | Bundled Python; separately installed Tektronix API/USB driver | RSA306B; initial reference host uses API 5.8.0275.0 |
+| Windows x64 | Bundled native worker; existing Tektronix RSA USB driver. Bundled Python for optional API fallback | Native: RSA306B HW7 / 1.7 / 2.1; fallback reference API 5.8.0275.0 |
 
 Intel Mac, Windows arm64, Linux hardware operation and multiple connected
 analyzers are outside this release. Both backends use sequential acquisition
@@ -27,20 +29,23 @@ platform controls, troubleshooting and evaluation-package instructions.
 Once the release is qualified and approved, install **Tektronix RSA306B** from
 SoundBase Lab. SoundBase supplies the JavaScript runtime; recipients do not need
 Node, Python, a compiler or Homebrew. Windows users must separately install the
-official x64 Tektronix RSA API and compatible USB driver (or SignalVu-PC).
+compatible Tektronix RSA USB driver (also supplied with SignalVu-PC). The native
+backend does not need RSA_API.dll. The API fallback requires the x64 API as well.
 [Vendor downloads](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer)
 provide the software and its installation instructions. Keep SignalVu and other
 analyzer applications closed while using SoundBase.
 
 Select the analyzer by its serial number in SoundBase's live-scan picker.
 Settings and traces use the standard SoundBase controls; the plugin has no
-separate UI. macOS exposes RF attenuation and IF gain, with fixed gain in the
-LF path. Windows exposes a Reference level control. SoundBase handles hold and
+separate UI. Native acquisition exposes RF attenuation and IF gain on both
+platforms, with fixed gain in the LF path. The Windows API fallback exposes a
+Reference level control. SoundBase handles hold and
 average trace modes. Incomplete, flagged, or incorrectly calibrated sweeps are
 withheld rather than filled with invented data.
 
-The optional **Tektronix API path (Windows)** setting accepts an absolute DLL
-path or its directory. Leave it empty for standard installed locations. Advanced
+The **Windows acquisition backend** setting defaults to **Native USB**. Stop
+and close live scans before switching to the API fallback. Its optional
+**Tektronix API path (Windows fallback)** accepts an absolute DLL path or directory. Leave it empty for standard installed locations. Advanced
 worker/Python path overrides are also explicit plugin settings; device selection
 never depends on a machine-local settings file.
 

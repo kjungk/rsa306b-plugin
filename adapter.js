@@ -11,19 +11,24 @@ function backend(config = {}) {
   const realMock = process.env.SB_RSA306B_NATIVE_MOCK === '1';
   const portableMock = process.env.SB_RSA306B_MOCK === '1' && !realMock;
   const target = portableMock ? 'darwin-arm64' : process.env.SB_RSA306B_BACKEND || `${process.platform}-${process.arch}`;
-  for (const field of target === 'win32-x64' ? ['pythonPath', 'windowsApiPath'] : ['nativeWorkerPath']) {
+  if (!['darwin-arm64', 'win32-x64'].includes(target)) throw new Error('RSA306B supports macOS Apple Silicon and Windows x64 only.');
+  const windowsBackend = config.windowsBackend ?? 'native';
+  if (target === 'win32-x64' && !['native', 'tektronix-api'].includes(windowsBackend)) {
+    throw new Error('Windows acquisition backend must be native or tektronix-api.');
+  }
+  const vendorApi = target === 'win32-x64' && windowsBackend === 'tektronix-api';
+  for (const field of vendorApi ? ['pythonPath', 'windowsApiPath'] : ['nativeWorkerPath']) {
     const value = config[field];
     if (value === undefined || value === null || value === '') continue;
-    const absolute = field === 'windowsApiPath' ? path.win32.isAbsolute : path.isAbsolute;
+    const absolute = target === 'win32-x64' ? path.win32.isAbsolute : path.posix.isAbsolute;
     if (typeof value !== 'string' || !absolute(value)) throw new Error(`${field} must be an absolute path.`);
   }
-  const key = JSON.stringify([target, portableMock, realMock, config.nativeWorkerPath, config.pythonPath, config.windowsApiPath]);
+  const key = JSON.stringify([target, vendorApi, portableMock, realMock, config.nativeWorkerPath, config.pythonPath, config.windowsApiPath]);
   if (backends.has(key)) return backends.get(key);
-  if (!['darwin-arm64', 'win32-x64'].includes(target)) throw new Error('RSA306B supports macOS Apple Silicon and Windows x64 only.');
-  const module = target === 'win32-x64' ? windows : native;
-  const io = target === 'win32-x64' ? windowsIO(config, { nativeMock: realMock }) : nativeIO(config, { portableMock, nativeMock: realMock });
-  const check = target === 'win32-x64' ? requireApi : requireCalibration;
-  const result = { target, module, io, discover: module.createDiscovery(io), diagnose: async signal => check(await io.query(['capabilities'], { signal })) };
+  const module = vendorApi ? windows : native;
+  const io = vendorApi ? windowsIO(config, { nativeMock: realMock }) : nativeIO(config, { target, portableMock, nativeMock: realMock });
+  const check = vendorApi ? requireApi : requireCalibration;
+  const result = { target, vendorApi, module, io, discover: module.createDiscovery(io), diagnose: async signal => check(await io.query(['capabilities'], { signal })) };
   backends.set(key, result); return result;
 }
 
@@ -71,9 +76,9 @@ function startDiagnostics(plugin, config) {
       if (current === generation) plugin.updateStatus('ok');
     } catch (error) {
       if (current === generation) {
-        const action = selected.target === 'win32-x64'
+        const action = selected.vendorApi
           ? 'Install the official Tektronix x64 API/USB driver and configure Windows API path. If Python is missing, reinstall the plugin package.'
-          : 'Reinstall the complete macOS arm64 plugin package, or build its native worker for a development checkout.';
+          : `Reinstall the complete ${selected.target === 'win32-x64' ? 'Windows x64' : 'macOS arm64'} plugin package, or build its native worker for a development checkout.`;
         plugin.updateStatus('needs-setup', `${action} ${String(error.message).slice(0, 1200)}`);
         retryTimer = setTimeout(check, 30000); retryTimer.unref?.();
       }

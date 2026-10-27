@@ -57,6 +57,49 @@ def pe_arch(path):
     return struct.unpack_from('<H', data, offset + 4)[0]
 
 
+def pe_imports(path):
+    """Read PE32+ imports without running a Windows binary or external tools."""
+    if pe_arch(path) != 0x8664:
+        raise ValueError(f'Not a Windows x64 executable: {path}')
+    data = Path(path).read_bytes()
+    coff = struct.unpack_from('<I', data, 0x3c)[0] + 4
+    if coff + 20 > len(data):
+        raise ValueError('Truncated PE COFF header')
+    sections, optional_size = struct.unpack_from('<H', data, coff + 2)[0], struct.unpack_from('<H', data, coff + 16)[0]
+    optional = coff + 20
+    if optional + optional_size > len(data) or optional_size < 128 or struct.unpack_from('<H', data, optional)[0] != 0x20b:
+        raise ValueError('Invalid PE32+ optional header')
+    section_offset = optional + optional_size
+    if section_offset + sections * 40 > len(data):
+        raise ValueError('Truncated PE section table')
+
+    def address(rva, length):
+        if rva < struct.unpack_from('<I', data, optional + 60)[0] and rva + length <= len(data):
+            return rva
+        for index in range(sections):
+            virtual_size, virtual, raw_size, raw = struct.unpack_from('<IIII', data, section_offset + index * 40 + 8)
+            if virtual <= rva < virtual + max(virtual_size, raw_size):
+                offset = raw + rva - virtual
+                if rva - virtual + length <= raw_size and offset + length <= len(data):
+                    return offset
+        raise ValueError('PE import RVA lies outside file-backed sections')
+
+    imports_rva, imports_size = struct.unpack_from('<II', data, optional + 120)
+    if not imports_rva:
+        return []
+    imports = []
+    for index in range(min(imports_size // 20, 4096)):
+        descriptor = struct.unpack_from('<IIIII', data, address(imports_rva + index * 20, 20))
+        if not any(descriptor):
+            return sorted(set(imports))
+        name = address(descriptor[3], 1)
+        end = data.find(b'\0', name, min(name + 256, len(data)))
+        if end < 0:
+            raise ValueError('Invalid PE import name')
+        imports.append(data[name:end].decode('ascii').lower())
+    raise ValueError('Unterminated PE import table')
+
+
 def write_runtime_manifest(directory, metadata):
     files = {}
     for p in sorted(directory.rglob('*')):

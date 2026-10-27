@@ -63,9 +63,9 @@ jobs:
       - name: Build arm64 worker and libusb, run offline CTest
         if: matrix.target == 'darwin-arm64'
         run: python scripts/build-native.py
-      - name: Assemble pinned Windows Python
+      - name: Build x64 native worker, run offline CTest, assemble fallback Python
         if: matrix.target == 'win32-x64'
-        run: python scripts/assemble-runtime.py
+        run: python scripts/build-native-windows.py
       - name: Run integration tests with the assembled target runtime
         run: npm test
       - name: Exercise actual target worker in mock mode

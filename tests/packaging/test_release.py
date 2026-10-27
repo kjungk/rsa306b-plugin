@@ -23,7 +23,8 @@ def fixture(directory, *, dirty=False):
     struct.pack_into('<H', pe, 68, 0x8664)
     files = {name: b'fixture' for name in ['main.js', 'adapter.js', 'package-lock.json', 'LICENSE',
         'LICENSE-TEMPLATE', 'THIRD-PARTY-NOTICES.md', 'driver/windows/worker.py',
-        'sources/native/CMakeLists.txt', 'sources/scripts/build-native.py', 'sources/release/runtime-pins.json',
+        'sources/native/CMakeLists.txt', 'sources/scripts/build-native.py', 'sources/scripts/build-native-windows.py',
+        'sources/scripts/assemble-runtime.py', 'sources/release/runtime-pins.json',
         'runtime/darwin-arm64/sources/libusb-1.0.30.tar.bz2', 'runtime/win32-x64/LICENSE.txt']}
     files['soundbase-plugin.json'] = json.dumps({'id': 'rsa306b', 'version': '0.1.0', 'license': 'MIT',
         'platforms': verify.TARGETS, 'runtime': {'type': 'node', 'entrypoint': 'main.js'}}).encode()
@@ -31,6 +32,7 @@ def fixture(directory, *, dirty=False):
     files['runtime/darwin-arm64/rsa306'] = arm
     files['runtime/darwin-arm64/libusb-1.0.0.dylib'] = arm
     files['runtime/win32-x64/python.exe'] = bytes(pe)
+    files['runtime/win32-x64/rsa306.exe'] = bytes(pe)
     for target in verify.TARGETS:
         prefix = f'runtime/{target}/'
         entries = {name.removeprefix(prefix): verify.sha(data) for name, data in files.items() if name.startswith(prefix)}
@@ -97,6 +99,14 @@ class ReleaseTests(unittest.TestCase):
             verify.require_arm64(b'\xcf\xfa\xed\xfe' + struct.pack('<I', 0x1000007))
         with self.assertRaises(ValueError):
             verify.require_x64(b'not an executable')
+
+    def test_python_only_windows_runtime_is_incomplete(self):
+        with tempfile.TemporaryDirectory() as work:
+            archive, files = fixture(Path(work))
+            del files['runtime/win32-x64/rsa306.exe']
+            write_archive(archive, files)
+            with self.assertRaisesRegex(ValueError, 'Missing release file.*rsa306.exe'):
+                verify.verify_archive(archive)
 
     def test_pending_dirty_wrong_artifact_and_changed_evidence_block_publication(self):
         with tempfile.TemporaryDirectory() as work:

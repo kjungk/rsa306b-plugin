@@ -1,18 +1,18 @@
 # Tektronix RSA306B plugin user manual
 
-For plugin version **0.1.0** · Updated **26 October 2026**
+For plugin version **0.1.0** · Updated **27 October 2026**
 
 The Tektronix RSA306B plugin brings live spectrum measurements into SoundBase
 Desktop. Select your analyzer in a Coord project's live-scan settings, choose
 the frequency range, and use SoundBase's plot and trace controls. The plugin
 has no separate application window.
 
-**Current status: development candidate.** This version has passed automated
-checks, Mac functional and endurance tests, and a Windows acquisition test with
-an RSA306B. Those hardware results cover different candidate packages;
-qualification of one final release and independent signal-generator measurements
-remain pending. It is not yet an approved Lab release. Use it for evaluation;
-do not treat its readings as independently verified amplitude measurements.
+**Current status: development candidate.** Earlier candidates passed Mac
+functional and endurance tests and Windows API acquisition checks. Practical
+signal-generator and modulated-signal measurements are documented in the
+[RF validation record](rf-validation-2026-10-27.md). The native Windows backend
+is new; qualification of one final package remains pending. This is not yet an
+approved Lab release or a certified amplitude measurement system.
 
 ## Contents
 
@@ -34,13 +34,13 @@ do not treat its readings as independently verified amplitude measurements.
 | --- | --- | --- |
 | Computer | Apple silicon Mac, macOS 14 or later | Windows x64 on an Intel or AMD processor |
 | SoundBase | SoundBase Desktop for Apple silicon with plugin support | SoundBase Desktop for Windows x64 with plugin support |
-| Analyzer | RSA306B hardware revision 7, firmware 1.7, FPGA 2.1 | RSA306B supported by the installed Tektronix API |
-| Acquisition software | Included in the complete plugin package | Official Tektronix x64 RSA API and compatible USB driver, installed separately |
+| Analyzer | RSA306B hardware revision 7, firmware 1.7, FPGA 2.1 | Native: the same HW7 / 1.7 / 2.1 combination; API fallback: RSA306B supported by the installed API |
+| Acquisition software | Included in the complete plugin package | Native worker included; compatible Tektronix RSA USB driver installed separately. API fallback additionally needs the x64 RSA API. |
 | USB connection | USB 3 SuperSpeed | USB 3 connection supported by the Tektronix driver |
 
 Use one connected RSA306B and one live scan at a time. Intel Macs, Windows arm64,
 Linux and multiple attached analyzers are outside this version's support.
-The Mac backend refuses device revisions other than the combination listed above.
+The native backend on both platforms refuses other device revisions.
 The Windows acquisition test used API version 5.8.0275.0; that is a tested version,
 not a claim that every other API version is compatible.
 
@@ -58,15 +58,25 @@ instrument's connection and input-limit instructions in the
 
 ### Windows preparation
 
-1. Get the **64-bit RSA API** and USB driver from
-   [Tektronix downloads](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer).
-   Tektronix also supplies the USB driver with SignalVu-PC. Follow the vendor's
-   installer instructions; these components are not included in the plugin.
+1. Install the compatible **Tektronix RSA USB driver** using the official
+   [Tektronix installer](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer).
+   SignalVu-PC also supplies this driver. If SignalVu already works with the
+   analyzer, keep that driver. Do not replace it with WinUSB or use Zadig.
+   The tested driver is `RSA3USB3.sys` version 1.2.3.20.
 2. Connect the RSA306B and allow driver installation to finish. If you use
    SignalVu-PC to check the connection, close it completely afterwards.
-3. Leave **Tektronix API path (Windows)** empty initially. The plugin searches
-   standard RSA API and SignalVu-PC installation locations. If it reports
-   **Needs setup**, see [Plugin and device settings](#plugin-and-device-settings).
+3. Leave **Windows acquisition backend** at **Native USB (default)**. This
+   backend uses the bundled worker and does not load `RSA_API.dll` or Python.
+   The Tektronix API path can stay empty.
+
+The driver is still a one-time Windows prerequisite; it is not included in the
+plugin ZIP. The tested driver allows multiple application handles, so it does
+not prevent SignalVu from interfering with a running scan. Keep SignalVu and
+SoundBase acquisition mutually exclusive; stop and close one before starting
+the other. To use the optional **Tektronix API (fallback)** backend, install the
+64-bit RSA API as well. Stop and close all live scans before changing backend.
+The fallback searches standard RSA API and SignalVu installation locations; an
+explicit API path is needed only when automatic lookup fails.
 
 macOS uses the acquisition software bundled with the plugin and does not require
 the Windows Tektronix API.
@@ -136,17 +146,17 @@ plugin's unadjusted readings.
 | Start and stop frequency | Set the measured band within 9 kHz–6.2 GHz. | Scan the band you need. Out-of-range values and spans that are too small are adjusted. |
 | Center and span | Another way SoundBase can present the same frequency range. | Check the resulting start and stop frequencies after a change. |
 | RBW | Resolution bandwidth determines how closely spaced signals can be resolved. | Start with Auto. Narrower RBW can reveal more frequency detail and usually requires more acquisition work. |
-| Points | Number of values supplied for a displayed trace; requested range 2–2000. | Start with 1001. More points do not by themselves improve the analyzer's RBW. macOS may reduce the count to match the available measured bins. |
+| Points | Number of values supplied for a displayed trace; requested range 2–2000. | Start with 1001. More points do not by themselves improve the analyzer's RBW. The native backend may reduce the count to match the available measured bins. |
 | Trace mode | SoundBase can display live, max-hold, min-hold and average traces. | Max-hold retains observed peaks; average smooths changing readings. Hold and average values include earlier accepted sweeps. |
 
-Available RBW values differ between platforms. Windows accepts 1 kHz–1 MHz;
-macOS uses discrete values from approximately 160 Hz to 1.31 MHz. The selected
-span also limits RBW, and very wide Mac scans may require a coarser value to fit
+The native backend on either platform uses discrete RBW values from
+approximately 160 Hz to 1.31 MHz. The Windows API fallback accepts 1 kHz–1 MHz.
+The selected span also limits RBW, and very wide native scans may require a coarser value to fit
 a complete sweep. **Auto does not mean a fixed 10 kHz**, and an explicitly
 requested value may be adjusted. Use the actual value reported by SoundBase
 when comparing measurements.
 
-### macOS controls
+### Native controls (macOS and Windows)
 
 | Control | Range and step | Initial value |
 | --- | --- | --- |
@@ -158,13 +168,13 @@ help with strong signals. Less IF gain can help avoid overload later in that
 path. Change one control at a time and check the warnings and resulting trace.
 These controls affect acquisition; they are not offsets to add to a reading.
 
-**Below 22 MHz, the Mac backend uses a separate path with fixed gain.** The RF
+**Below 22 MHz, the native backend uses a separate path with fixed gain.** The RF
 attenuation and IF gain settings do not change its gain. Sweeps crossing 22 MHz
 switch paths automatically. If an LF measurement overloads, changing these RF
 controls will not solve it; reduce the signal reaching the input using an
 appropriate measurement setup.
 
-### Windows control
+### Windows API fallback control
 
 | Control | Range and step | Initial value |
 | --- | --- | --- |
@@ -176,8 +186,8 @@ positive reference level and check the next complete sweep. Changing only the
 plot's vertical display limits does not perform this acquisition adjustment.
 
 The API can adjust requested settings. The plugin returns the actual reference
-level and RBW to SoundBase. Mac RF attenuation and IF gain settings have no
-equivalent controls in this Windows implementation.
+level and RBW to SoundBase. The fallback exposes reference level instead of
+the native backend's RF attenuation and IF gain controls.
 
 ## Understand the measurements
 
@@ -188,8 +198,9 @@ does not provide simultaneous coverage from 9 kHz to 6.2 GHz, and a waterfall
 does not remove those gaps. Narrow the span when you need more frequent updates
 in a particular band.
 
-Levels are reported in **dBm**. macOS applies the attached unit's factory
-correction tables; Windows uses the official Tektronix API conversion. The
+Levels are reported in **dBm**. The native backend on both platforms applies
+the attached unit's factory correction tables. The Windows API fallback uses
+the official Tektronix API conversion. The
 plugin does not apply your antenna factor, cable loss or external amplifier
 gain. These readings are not automatically field strength or transmitter
 output power.
@@ -212,9 +223,10 @@ the scan frequency and device controls.
 
 | Setting | Normal use |
 | --- | --- |
-| Tektronix API path (Windows) | Leave empty for automatic lookup. If needed, enter the full path to the installed `RSA_API.dll` or its containing directory. |
-| Native worker path (advanced, macOS) | Leave empty to use the bundled acquisition worker. Change only when the maintainer supplies a compatible replacement. |
-| Python interpreter (advanced, Windows) | Leave empty to use the bundled interpreter. Installing a system Python is not a normal setup step. |
+| Windows acquisition backend | Native USB is the default and needs only the compatible USB driver. Tektronix API is an explicit fallback. Close live scans before switching. |
+| Tektronix API path (Windows fallback) | Leave empty for automatic lookup. Used only by the API fallback; optionally enter the full path to `RSA_API.dll` or its directory. |
+| Native worker path (advanced) | Leave empty to use the bundled acquisition worker. Change only when the maintainer supplies a compatible replacement for your OS and architecture. |
+| Python interpreter (advanced, Windows fallback) | Leave empty to use the bundled interpreter. This setting is unused by Native USB. |
 
 For example, if this file exists on your computer, the Windows API path may be
 `C:\Tektronix\RSA_API\lib\x64\RSA_API.dll` or
@@ -238,11 +250,12 @@ failure, and runs again after you change plugin settings.
 | Symptom | What to check or do |
 | --- | --- |
 | Plugin does not appear | Use SoundBase Desktop on a supported architecture. Check that the package is installed and enabled. For an evaluation ZIP, check the folder layout and launch instructions below. |
-| Needs setup on Windows | Install the x64 RSA API and USB driver. Check the API path and ensure it points to the 64-bit DLL. If the bundled interpreter is missing, restore the complete plugin package. |
+| Needs setup on Windows | For Native USB, restore the complete package and clear an unintended native-worker override. For the API fallback, check the x64 API installation/path and bundled Python. |
+| Native Windows discovery cannot access USB | Check the existing Tektronix RSA USB driver and close SignalVu or other analyzer software. Keep the vendor driver installed; changing drivers is not part of plugin setup. |
 | Needs setup on Mac | Use the complete arm64 package on macOS 14 or later. Clear an unintended worker-path override and reinstall the complete package if necessary. |
 | Invalid configuration or absolute-path error | Clear unused advanced path fields, or replace a relative path with the full path to the intended file or directory. |
 | Plugin is ready but no analyzer is listed | Connect exactly one RSA306B, check USB 3 connectivity, and close competing applications. Discovery can take several seconds to refresh. A ready plugin does not mean a device is attached. |
-| Unsupported device revision on Mac | Check hardware, firmware and FPGA versions against the requirements above. Other combinations need maintainer support. |
+| Unsupported device revision with Native USB | Check hardware, firmware and FPGA versions against the requirements above. Other combinations need maintainer support. |
 | Already open, busy or access error | Close the other live-scan connection and SignalVu-PC or other acquisition software. If this followed a crash, use the recovery steps below. |
 | Selected analyzer differs or serial mismatch | Choose the connected unit again in the device picker; do not reuse another analyzer's saved serial. |
 | Trace is slow to update | Reduce the span and try Auto or a coarser RBW. Wait for a complete pass and check for withheld-sweep warnings. |
@@ -291,8 +304,9 @@ plugin. Existing projects are not migrated automatically.
 
 When moving a project between Mac and Windows, verify the serial and scan
 settings again. Each computer needs its own plugin installation; Windows also
-needs its own Tektronix API/driver installation. Adjust that platform's controls
-because Mac gain values and Windows reference level are not interchangeable.
+needs its own USB driver installation. The native controls match between
+platforms. If switching to the Windows API fallback, review reference level:
+it is not interchangeable with native RF attenuation and IF gain.
 
 ## Get help
 

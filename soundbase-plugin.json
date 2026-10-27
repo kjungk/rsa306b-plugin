@@ -58,22 +58,39 @@
   ],
   "pluginConfigFields": [
     {
+      "id": "windowsBackend",
+      "type": "dropdown",
+      "label": "Windows acquisition backend",
+      "default": "native",
+      "choices": [
+        {
+          "id": "native",
+          "label": "Native USB (default)"
+        },
+        {
+          "id": "tektronix-api",
+          "label": "Tektronix API (fallback)"
+        }
+      ],
+      "help": "Native USB uses the existing Tektronix RSA USB driver without RSA_API.dll. The fallback requires the installed Tektronix x64 API. Stop and close live scans before changing this setting."
+    },
+    {
       "id": "windowsApiPath",
       "type": "textinput",
-      "label": "Tektronix API path (Windows)",
-      "help": "Optional absolute path to RSA_API.dll, or its directory. Leave empty to use standard Tektronix installation locations."
+      "label": "Tektronix API path (Windows fallback)",
+      "help": "Used only by the Tektronix API fallback. Optional absolute path to RSA_API.dll, or its directory. Leave empty for standard installation locations."
     },
     {
       "id": "nativeWorkerPath",
       "type": "textinput",
-      "label": "Native worker path (advanced, macOS)",
-      "help": "Optional absolute path to a compatible arm64 rsa306 worker. Leave empty to use the bundled worker."
+      "label": "Native worker path (advanced)",
+      "help": "Optional absolute path to a compatible rsa306 worker for macOS arm64 or rsa306.exe for Windows x64. Leave empty to use the bundled worker."
     },
     {
       "id": "pythonPath",
       "type": "textinput",
-      "label": "Python interpreter (advanced, Windows)",
-      "help": "Optional absolute path to Python. Leave empty to use the bundled isolated runtime."
+      "label": "Python interpreter (advanced, Windows fallback)",
+      "help": "Used only by the Tektronix API fallback. Optional absolute path to Python. Leave empty to use the bundled isolated runtime."
     }
   ],
   "stateKeys": [],

@@ -19,9 +19,15 @@
 #include <optional>
 #include <set>
 #include <sstream>
+#include <cerrno>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#else
 #include <poll.h>
 #include <unistd.h>
-#include <cerrno>
+#endif
 
 namespace {
 volatile std::sig_atomic_t interrupted = 0;
@@ -32,11 +38,30 @@ bool cancelled() {
     if(interrupted || control_stop)return true;
     if(!stdin_control)return false;
     static std::string buffer;
+#ifdef _WIN32
+    const auto input=GetStdHandle(STD_INPUT_HANDLE);
+    if(input==nullptr || input==INVALID_HANDLE_VALUE) {control_stop=true;return true;}
+    const auto kind=GetFileType(input);
+    DWORD available=0;
+    if(kind==FILE_TYPE_PIPE) {
+        if(!PeekNamedPipe(input,nullptr,0,nullptr,&available,nullptr)) {control_stop=true;return true;}
+        if(!available)return false;
+    } else if(kind!=FILE_TYPE_DISK) {
+        // --stdin-control is a redirected pipe/file protocol. Never block an
+        // acquisition loop on a console read or an unsupported input handle.
+        control_stop=true;return true;
+    }
+    {
+        char bytes[256];DWORD n=0;
+        if(!ReadFile(input,bytes,sizeof(bytes),&n,nullptr) || n==0)control_stop=true;
+        else {
+#else
     pollfd fd{STDIN_FILENO,POLLIN|POLLHUP,0};
     if(::poll(&fd,1,0)>0 && (fd.revents&(POLLIN|POLLHUP|POLLERR))) {
         char bytes[256];const auto n=::read(STDIN_FILENO,bytes,sizeof(bytes));
         if(n==0 || (n<0 && errno!=EINTR && errno!=EAGAIN))control_stop=true;
         else if(n>0) {
+#endif
             buffer.append(bytes,static_cast<std::size_t>(n));
             if(buffer.size()>4096)throw rsa::Error("invalid_control","Control input exceeds limit.",2);
             if(auto end=buffer.find('\n');end!=std::string::npos) {

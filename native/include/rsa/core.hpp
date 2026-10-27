@@ -49,7 +49,8 @@ struct Device {
     double speed_mbps;
     std::vector<Interface> interfaces;
 };
-// Descriptor reads only. Does not open, claim, reset, or send vendor commands.
+// Descriptor reads only; never resets, claims, or sends vendor commands.
+// Windows opens the existing driver exclusively for bounded descriptor requests.
 std::vector<Device> discover();
 
 // This is an explicit offline interchange format, NOT the RSA USB sample format.

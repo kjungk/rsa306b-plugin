@@ -1,8 +1,10 @@
 # Implementation and validation record — 2026-10-26
 
-For subsequent tests of the clean-source CI package, see the
-[Mac hardware validation results](macos-validation-2026-10-26.md). The local
-candidate and Windows results recorded below refer to a different ZIP.
+This is the historical 26 October record. For later evidence, see the
+[Mac CI-package results](macos-validation-2026-10-26.md),
+[completed generator measurements and numerical replay](rf-validation-2026-10-27.md),
+and [native Windows tests](windows-native-validation-2026-10-27.md).
+The local candidate and Windows API results below refer to an earlier ZIP.
 
 The official-template RSA306B implementation is complete as a **development
 candidate**. Public release qualification is pending. Nothing was installed into
@@ -73,16 +75,15 @@ Local detailed reports are retained in `.evidence/windows-candidate-02/` and
 retained under `native/build/`. Those local evidence files are excluded from
 public source and release assets.
 
-## Remaining release gates
+## Release status after subsequent work
 
-- Real macOS acquisition with the new full-range LF correction, including cold
-  startup, LF/RF transitions and exact-package comparison with known signals.
-- Both-platform Desktop plot/waterfall checks, physical unplug/reconnect,
-  30-minute endurance and controlled host-crash/recovery checks.
-- The planned signal-generator measurements. Its model/calibrated coverage is
-  still unknown; follow `rsa306b-validation.md` before claiming accuracy.
-- A committed-source CI build and qualification tied to that immutable ZIP.
-- Lab screenshot, submission, approval and installation checks on both targets.
+The Mac CI-package acquisition, disconnect/reconnect, Desktop rendering and
+30-minute soak passed on 26 October. The controlled SMHU and modulated campaigns
+completed on 27 October; their numerical bridge and limits are recorded in the
+linked RF report. Those tasks must no longer be described as unperformed.
 
-`release/qualification.json` retains pending status for every full acceptance
-gate. The Windows automated subset is not promoted to a full hardware pass.
+The native Windows backend and new shared transport require their own acceptance.
+A new committed-source CI candidate still needs qualification tied to its exact
+ZIP, followed by Lab screenshot, submission, approval and installation checks.
+`release/qualification.json` remains pending; this historical Windows API subset
+cannot qualify the newer native worker.

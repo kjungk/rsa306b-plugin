@@ -1,6 +1,6 @@
 #include "rsa/protocol.hpp"
 #include "rsa/device_lock.hpp"
-#include <libusb.h>
+#include "rsa/transport.hpp"
 #include <algorithm>
 #include <atomic>
 #include <bit>
@@ -12,9 +12,6 @@
 namespace rsa::wire {
 namespace {
 using Clock=std::chrono::steady_clock;
-void usb_check(int code,const char* action) {
-    if (code<0) throw Error("usb_error",std::string(action)+": "+libusb_error_name(code),4);
-}
 void protocol_need(bool ok,const char* message) {
     if (!ok) throw Error("protocol_error",message,4);
 }
@@ -30,11 +27,10 @@ std::string ascii(std::span<const std::uint8_t> bytes) {
 }
 struct Session::Impl {
     std::unique_ptr<DeviceLock> ownership; // Held through USB cleanup, including exceptional teardown.
-    std::unique_ptr<libusb_context,decltype(&libusb_exit)> context{nullptr,libusb_exit};
-    std::unique_ptr<libusb_device_handle,decltype(&libusb_close)> handle{nullptr,libusb_close};
+    std::unique_ptr<usb::Transport> transport;
     std::function<bool()> cancelled;
     std::function<void(bool, std::span<const std::uint8_t>)> trace;
-    bool claimed=false, communicating=false, configured=false, failed=false;
+    bool communicating=false, configured=false, failed=false;
     std::uint16_t sequence=0, tag=0;
     Identity id;
     explicit Impl(std::function<bool()> stop):cancelled(std::move(stop)) {}
@@ -47,13 +43,12 @@ struct Session::Impl {
         const auto current=sequence++;
         auto out=request(current,op,payload);
         if(trace) trace(true,out);
-        int actual=0;
-        usb_check(libusb_interrupt_transfer(handle.get(),0x03,out.data(),static_cast<int>(out.size()),&actual,1000),"command OUT");
-        protocol_need(actual==static_cast<int>(out.size()),"Partial command write; command was not retried.");
+        const auto written=transport->interrupt(0x03,out,1000);
+        protocol_need(written==out.size(),"Partial command write; command was not retried.");
         std::array<std::uint8_t,1024> in{};
-        usb_check(libusb_interrupt_transfer(handle.get(),0x83,in.data(),static_cast<int>(in.size()),&actual,1000),"command IN");
-        if(trace) trace(false,std::span(in).first(static_cast<std::size_t>(actual)));
-        auto result=response(std::span(in).first(static_cast<std::size_t>(actual)),current,op);
+        const auto actual=transport->interrupt(0x83,in,1000);
+        if(trace) trace(false,std::span(in).first(actual));
+        auto result=response(std::span(in).first(actual),current,op);
         return result;
     }
     Bytes cmd_words(std::uint16_t op,std::initializer_list<std::uint16_t> values) {return command(op,words(values));}
@@ -92,31 +87,8 @@ struct Session::Impl {
     void open() {
         check_cancel();
         ownership=std::make_unique<DeviceLock>();
-        libusb_context* raw=nullptr; usb_check(libusb_init(&raw),"libusb_init"); context.reset(raw);
-        libusb_device** devices=nullptr;
-        const auto n=libusb_get_device_list(context.get(),&devices);
-        if(n<0) usb_check(static_cast<int>(n),"list devices");
-        libusb_device* selected=nullptr; unsigned count=0;
-        for (decltype(+n) i=0;i<n;++i) {
-            libusb_device_descriptor d{};
-            if(libusb_get_device_descriptor(devices[i],&d)==0 && d.idVendor==0x699 && d.idProduct==0xa306) {selected=devices[i];++count;}
-        }
-        if(count!=1) {libusb_free_device_list(devices,1);throw Error("device_count","Connect exactly one RSA306B to this Mac; found "+std::to_string(count)+".",4);}
-        const auto speed=libusb_get_device_speed(selected);
-        libusb_device_handle* opened=nullptr;
-        const auto status=libusb_open(selected,&opened);
-        libusb_free_device_list(devices,1); usb_check(status,"open RSA306B");handle.reset(opened);
-        if(speed<LIBUSB_SPEED_SUPER) throw Error("usb_speed","Raw IF acquisition requires a USB 3 SuperSpeed connection.",4);
-        int config=0;usb_check(libusb_get_configuration(handle.get(),&config),"get configuration");
-        if(config!=1) usb_check(libusb_set_configuration(handle.get(),1),"select configuration 1");
-        usb_check(libusb_claim_interface(handle.get(),0),"claim interface 0");claimed=true;
-        // Do not resend SET_INTERFACE for an already-selected alternate. The
-        // FX3 endpoint state can be disturbed by redundant interface selection.
-        unsigned char alternate=0;
-        const auto alt_status=libusb_control_transfer(handle.get(),0x81,0x0a,0,0,&alternate,1,1000);
-        usb_check(alt_status,"get interface alternate");
-        protocol_need(alt_status==1,"Missing interface alternate response.");
-        if(alternate!=0)usb_check(libusb_set_interface_alt_setting(handle.get(),0,0),"select alternate 0");
+        transport=usb::open();
+        transport->initialize();
         command(22); communicating=true;
         check_post(command(23)); // Read stored startup results before RF/register access.
         command(2);
@@ -175,76 +147,26 @@ struct Session::Impl {
         const auto t=tuning(settings.spectrum.center_hz);
         write(configuration_registers(settings,next_tag()));lock();configured=true;return t;
     }
-    struct Slot {
-        Impl* owner=nullptr;
-        std::unique_ptr<libusb_transfer,decltype(&libusb_free_transfer)> transfer{nullptr,libusb_free_transfer};
-        std::array<unsigned char,262144> bytes{};
-        bool pending=false;
-    };
-    std::array<Slot,16> slots;
-    std::size_t pending=0;
-    bool draining=false;
     std::unique_ptr<FrameCollector> collector;
-    std::exception_ptr failure;
-    static void callback(libusb_transfer* transfer) noexcept {
-        auto& slot=*static_cast<Slot*>(transfer->user_data);auto& self=*slot.owner;
-        slot.pending=false;--self.pending;
-        if(self.draining) return;
-        try {
-            if(transfer->status!=LIBUSB_TRANSFER_COMPLETED)
-                throw Error("bulk_transfer_error","Bulk completion status "+std::to_string(transfer->status)+"; partial bytes were not emitted as a spectrum.",4);
-            self.collector->push(std::span(slot.bytes).first(static_cast<std::size_t>(transfer->actual_length)));
-            if(!self.collector->complete() && !self.failure) {
-                usb_check(libusb_submit_transfer(transfer),"resubmit bulk transfer");slot.pending=true;++self.pending;
-            }
-        } catch(...) {self.failure=std::current_exception();}
-    }
-    void pump() {
-        timeval wait{0,10000};
-        const auto status=libusb_handle_events_timeout(context.get(),&wait);
-        if(status!=LIBUSB_ERROR_INTERRUPTED) usb_check(status,"handle USB events");
-    }
-    void drain() {
-        draining=true;
-        for(auto& slot:slots) if(slot.pending) {
-            const auto status=libusb_cancel_transfer(slot.transfer.get());
-            if(status!=0 && status!=LIBUSB_ERROR_NOT_FOUND) {
-                // Completion callbacks still own the buffers; never free an in-flight transfer.
-            }
-        }
-        const auto deadline=Clock::now()+std::chrono::seconds(5);
-        while(pending) {
-            if(Clock::now()>deadline)
-                throw Error("usb_cleanup_timeout","USB callbacks did not drain within five seconds; this session cannot be reused.",4);
-            try {pump();} catch(const Error&) {
-                // Cancellation completion may still arrive after an event-loop error.
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-        }
-    }
+    void drain() { if(transport) transport->drain(); }
+    bool pending() const { return transport && transport->has_pending(); }
     Capture acquire(std::size_t n) {
         protocol_need(configured,"Configure before acquiring.");check_cancel();
         if(n<8 || n>(1U<<20) || !std::has_single_bit(n)) throw Error("invalid_fft","Invalid native sample count.",2);
         command(2);write({{0x43,0xffff},{0x43,next_tag()}});
         collector=std::make_unique<FrameCollector>(tag,n);
-        failure=nullptr;draining=false;
         try {
-            for(auto& slot:slots) {
-                slot.owner=this;
-                if(!slot.transfer) slot.transfer.reset(libusb_alloc_transfer(0));
-                if(!slot.transfer) throw std::bad_alloc();
-                libusb_fill_bulk_transfer(slot.transfer.get(),handle.get(),0x84,slot.bytes.data(),
-                                          static_cast<int>(slot.bytes.size()),callback,&slot,3000);
-                usb_check(libusb_submit_transfer(slot.transfer.get()),"submit bulk transfer");slot.pending=true;++pending;
-            }
+            transport->start_bulk([this](std::span<const std::uint8_t> bytes) {
+                collector->push(bytes);
+                return !collector->complete();
+            });
             collector->result.host_start=wall_time();command(1);
             const auto deadline=Clock::now()+std::chrono::seconds(3);
             while(!collector->complete()) {
-                check_cancel();if(failure) std::rethrow_exception(failure);
+                check_cancel();
                 if(Clock::now()>deadline) throw Error("acquisition_timeout","No complete contiguous IF block with the current frame tag within three seconds.",4);
-                pump();
+                transport->pump();
             }
-            if(failure) std::rethrow_exception(failure);
             collector->result.host_end=wall_time();command(2);drain();return std::move(collector->result);
         } catch(...) {
             const auto error=std::current_exception();
@@ -254,8 +176,13 @@ struct Session::Impl {
     }
     ~Impl() {
         if(communicating) cleanup_command(2);
-        if(pending) {try {drain();} catch(...) {}}
-        if(claimed) libusb_release_interface(handle.get(),0);
+        if(pending()) {try {drain();} catch(...) {}}
+        if(pending()) {
+            // Failed construction can reach this destructor without ~Session.
+            // Keep the driver handle, OVERLAPPED storage, and lock alive.
+            (void)transport.release();
+            (void)ownership.release();
+        }
     }
 };
 Session::Session(std::function<bool()> cancelled, std::function<void(bool, std::span<const std::uint8_t>)> trace)
@@ -269,12 +196,12 @@ Session::Session(std::function<bool()> cancelled, std::function<void(bool, std::
     impl_=std::make_unique<Impl>(std::move(cancelled));impl_->trace=std::move(trace);impl_->open();
 }
 Session::~Session() {
-    if(impl_ && impl_->pending) {
+    if(impl_ && impl_->pending()) {
         try {impl_->drain();} catch(...) {
             // The USB backend still owns callback pointers and buffers. Quarantine
             // the entire session until process exit rather than free live memory.
             // Successful callback drain avoids this exceptional path.
-            if(impl_->pending) (void)impl_.release();
+            if(impl_->pending()) (void)impl_.release();
         }
     }
 }
