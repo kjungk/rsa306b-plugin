@@ -1,6 +1,6 @@
 {
   "name": "soundbase-plugin-rsa306b",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Tektronix RSA306B spectrum analyzer for SoundBase Desktop on macOS arm64 and Windows x64.",
   "license": "MIT",
   "type": "module",

@@ -1,14 +1,15 @@
 # Tektronix RSA306B plugin user manual
 
-For plugin version **0.1.0** · Updated **27 October 2026**
+For plugin version **1.0.0** · Updated **27 October 2026**
 
 The Tektronix RSA306B plugin brings live spectrum measurements into SoundBase
 Desktop. Select your analyzer in a Coord project's live-scan settings, choose
 the frequency range, and use SoundBase's plot and trace controls. The plugin
 has no separate application window.
 
-**0.1.0 beta.** Installation through SoundBase Lab becomes available after the
-listing is approved. The native backend uses the analyzer's factory calibration.
+The plugin is published on SoundBase Lab. Check the listed version before
+installing; GitHub may have a newer release. The native backend uses the
+analyzer's factory calibration.
 
 ## Contents
 
@@ -89,8 +90,8 @@ explicit API path is needed only when automatic lookup fails.
 
 ### Installation through Lab
 
-These steps apply **once an approved release is available**. Until then, use the
-complete ZIP attached to the GitHub release and follow
+Install the approved version from Lab using the steps below. To load a newer
+GitHub release directly, use its complete ZIP and follow
 [Load a supplied evaluation package](#load-a-supplied-evaluation-package).
 
 1. Open [SoundBase Lab](https://lab.soundbase.app), sign in if requested, and find
@@ -372,19 +373,19 @@ It does not install or approve a Lab release. GitHub's automatically generated
 **Source code** archives are not runnable plugin packages.
 
 If the maintainer supplies a GitHub Actions artifact named **plugin-zip**, first
-extract that outer artifact. Use the inner `rsa306b-0.1.0.zip` and its `.sha256`
+extract that outer artifact. Use the inner `rsa306b-1.0.0.zip` and its `.sha256`
 file (substitute the supplied version). Extracting the outer artifact alone
 does not create a runnable plugin folder. Compare the inner ZIP's SHA-256 with
 the supplied checksum before loading it:
 
 ```sh
 # macOS; adjust the path to the supplied inner ZIP
-shasum -a 256 "$HOME/Downloads/rsa306b-0.1.0.zip"
+shasum -a 256 "$HOME/Downloads/rsa306b-1.0.0.zip"
 ```
 
 ```powershell
 # Windows; adjust the path to the supplied inner ZIP
-Get-FileHash -Algorithm SHA256 "$env:USERPROFILE\Downloads\rsa306b-0.1.0.zip"
+Get-FileHash -Algorithm SHA256 "$env:USERPROFILE\Downloads\rsa306b-1.0.0.zip"
 ```
 
 1. Disable any older RSA306B integration, then quit SoundBase Desktop completely.

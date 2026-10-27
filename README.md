@@ -4,8 +4,10 @@ A SoundBase Desktop plugin for the Tektronix RSA306B spectrum analyzer on
 **Apple silicon Macs and Windows x64**. It provides live spectrum traces over
 9 kHz–6.2 GHz, using SoundBase's scan controls, plot and waterfall.
 
-**0.1.0 beta:** Apple silicon and Windows x64. Installation through SoundBase Lab
-becomes available after the listing is approved.
+**1.0.0:** Apple silicon and Windows x64. The plugin is published on
+[SoundBase Lab](https://lab.soundbase.app). Check the version listed there;
+[GitHub Releases](https://github.com/kjungk/rsa306b-plugin/releases) may have a
+newer package.
 
 ## Requirements
 

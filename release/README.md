@@ -54,7 +54,7 @@ It verifies runtime hashes, preserves executable permissions and refuses to
 replace an existing ZIP. Use a new output directory for another build.
 
 ```sh
-python3 scripts/verify-release.py dist/candidate-01/rsa306b-0.1.0.zip \
+python3 scripts/verify-release.py dist/candidate-01/rsa306b-1.0.0.zip \
   --extract build/extracted-01 --output build/package-verification.json
 node scripts/check-package.mjs build/extracted-01/rsa306b
 ```
@@ -70,7 +70,7 @@ applications and explicitly opt in:
 
 ```sh
 node scripts/check-hardware.mjs build/extracted-01/rsa306b build/hardware.json \
-  --hardware --archive dist/candidate-01/rsa306b-0.1.0.zip
+  --hardware --archive dist/candidate-01/rsa306b-1.0.0.zip
 ```
 
 The default mode checks acquisition ranges and retuning. Other modes are
@@ -109,17 +109,18 @@ and known behavior explicitly. Raw measurements and device data stay private;
 only concise acceptance summaries belong in `release/reports/`.
 
 ```sh
-python3 scripts/verify-release.py dist/candidate-01/rsa306b-0.1.0.zip \
+python3 scripts/verify-release.py dist/candidate-01/rsa306b-1.0.0.zip \
   --qualification release/qualification.json
 ```
 
 Manually run **Release** with `publish: true` and the successful candidate's
 `candidate_run_id`. It verifies qualification and publishes the existing bytes
-as a prerelease with the user-facing notes and qualification summaries, without
-rebuilding or replacing an existing release. With
-`publish: false`, it only rehearses the build. Submit the resulting release to
-SoundBase Lab, supply a screenshot, obtain approval and verify installation on
-both targets with `SB_PLUGIN_DIRS` unset.
+as a stable release with the user-facing notes and qualification summaries,
+without rebuilding or replacing an existing release. Set `prerelease: true`
+only for a beta release. With `publish: false`, it only rehearses the build.
+The plugin is already listed on SoundBase Lab. Submit a version update there
+separately when requested, obtain approval and verify installation on both
+targets with `SB_PLUGIN_DIRS` unset.
 
 ## Notices and replacement runtimes
 

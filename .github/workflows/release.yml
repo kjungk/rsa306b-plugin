@@ -13,6 +13,10 @@ on:
         description: 'Successful CI/rehearsal Actions run ID containing plugin-zip'
         type: string
         default: ''
+      prerelease:
+        description: 'Mark this release as a beta instead of stable'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -54,9 +58,10 @@ jobs:
           python scripts/verify-release.py "${ZIPS[0]}" --qualification release/qualification.json --output candidate-verified.json
           test "$(jq -r .source_commit candidate-verified.json)" = "$(jq -r .head_sha candidate-run.json)"
           test "$(jq -r .event candidate-run.json)" != pull_request
-      - name: Publish one ZIP as a prerelease
+      - name: Publish the qualified ZIP
         env:
           GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ inputs.prerelease }}
         shell: bash
         run: |
           set -euo pipefail
@@ -77,7 +82,13 @@ jobs:
           else
             test "$?" = 2
           fi
+          TITLE="Tektronix RSA306B $VERSION"
+          RELEASE_FLAGS=(--latest)
+          if [[ "$PRERELEASE" = true ]]; then
+            TITLE="$TITLE beta"
+            RELEASE_FLAGS=(--prerelease)
+          fi
           gh release create "$TAG" "dist/rsa306b-$VERSION.zip" "dist/rsa306b-$VERSION.zip.sha256" \
             release/qualification.json release/reports/*.json \
             --repo "$GITHUB_REPOSITORY" --target "$SOURCE" \
-            --prerelease --title "Tektronix RSA306B $VERSION beta" --notes-file release/NOTES.md
+            "${RELEASE_FLAGS[@]}" --title "$TITLE" --notes-file release/NOTES.md
