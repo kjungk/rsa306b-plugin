@@ -1,9 +1,46 @@
 # Validation and public-release gates
 
-This repository is a development candidate. The LF extension and unified plugin
-must be qualified as a new artifact. The [completed RF measurements and numerical
-replay](rf-validation-2026-10-27.md) preserve substantial source-project evidence;
-final-package hardware acceptance must still identify the exact tested artifact.
+This repository is a development candidate with completed native hardware tests
+on both targets. The [current status](implementation-status.md) identifies each
+tested artifact. The [completed RF measurements and numerical replay](rf-validation-2026-10-27.md)
+preserve the source-project measurement evidence. Final release qualification
+must bring the required checks together against one immutable ZIP.
+
+## Evidence available on 27 October 2026
+
+| Check | Result and artifact scope |
+| --- | --- |
+| Windows native acquisition, controls and lifecycle | Passed on development and CI packages; the CI package delivered 54 fresh traces |
+| Mac native acquisition, controls and lifecycle | Passed 54 fresh traces on the same CI package, including full-range acquisition |
+| Windows physical disconnect/reconnect and 30-minute soak | Passed on the development package; 2,877 fresh soak traces |
+| Official API and SignalVu after native streaming | Official API acquired three fresh sweeps; operator confirmed SignalVu's live spectrum; driver unchanged |
+| Earlier Mac soak, reconnect and Desktop checks | Passed on the 26 October package; see its report for the forced-host-exit limitation |
+| RF evidence | Completed SMHU and modulated-signal measurements, 420-burst Mac replay and a three-burst Windows numerical comparison |
+
+The [Windows report](windows-native-validation-2026-10-27.md),
+[Mac regression report](macos-native-regression-2026-10-27.md),
+[earlier Mac report](macos-validation-2026-10-26.md) and
+[RF report](rf-validation-2026-10-27.md) retain the exact hashes and limits.
+
+## Remaining release checks
+
+1. Freeze a clean, successful CI candidate from `main` after the intended source
+   and documentation changes. Use its exact ZIP for the remaining qualification;
+   retain prior evidence against its original artifact rather than changing hashes.
+2. Complete final-package soak and physical disconnect/reconnect on both targets,
+   plus Desktop plot/waterfall, project reload, disable/enable and normal exit.
+   Record controlled hard-host-crash behavior and the core 1.4 recovery limitation.
+3. Validate Windows Desktop operation with an ordinary unelevated user and on a
+   clean PC with the vendor USB driver installed through its official installer.
+   The TPX1 SSH tests used an administrator token. A bundled driver installer is
+   outside the current package; redistributing one requires separate validation.
+4. Perform targeted final-package RF confirmation using the retained measurement
+   evidence. Document source/cable uncertainty and unmeasured LF, route-transition
+   and high-frequency coverage; do not turn tuning-range checks into an absolute
+   amplitude-accuracy claim.
+5. Complete and hash the qualification reports, promote the qualified ZIP using
+   the release workflow, then submit to Lab with a screenshot, obtain approval
+   and check installation on both targets with development overrides removed.
 
 ## Automated checks
 
@@ -55,7 +92,10 @@ platforms. The default `acquisition` mode checks full range, LF, the LF/RF
 transition, microphone band and active retuning. `controls` checks native RF
 attenuation and IF gain, clamping, partial updates, manual/automatic RBW and
 hold/average modes. `lifecycle` checks competing-owner rejection, repeated stop,
-restart and close/reopen. The API fallback requires separate targeted checks;
+restart and close/reopen. The deliberate competing alias emits failed-status
+events: only that alias, the expected ownership message and the verified HTTP
+rejection are classified as expected. Other failed-device events fail the run.
+The API fallback requires separate targeted checks;
 these modes do not test its reference-level control.
 
 `soak` runs for 1800 seconds by default; shorter runs retain the 30-minute soak
@@ -74,7 +114,8 @@ events while running. Each report remains `partial` even when its selected
 mode passes, with untested modes and manual gates explicitly pending. The client
 does not install the plugin or edit a SoundBase project. Its Windows shutdown
 closes the device cooperatively before terminating the remaining plugin process
-tree; a cleanup error fails the run.
+tree; a cleanup error fails the run. The harness's Windows process-tree
+termination is not evidence of normal Desktop shutdown.
 
 Use the **exact extracted release candidate** on macOS arm64 and Windows x64.
 Keep one RSA306B attached and close other programs that acquire it. Record OS,
@@ -138,7 +179,7 @@ unverified.
 
 ## Immutable candidate and release decision
 
-`release/qualification.json` starts pending. It binds acceptance to the candidate
+`release/qualification.json` remains pending. It binds acceptance to the candidate
 ZIP SHA-256, source commit and version. The macOS hardware, Windows hardware and
 signal-generator reports must all be passed, hashed and tied to that same ZIP
 before the publication workflow accepts them. Never fill these entries from

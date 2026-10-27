@@ -25,7 +25,11 @@ but the public package exports core 1.4 and lacks that feature.
 libusb and Windows embeddable Python versions, URLs and SHA-256 pins are recorded
 under `release/`. Their licenses and required corresponding-source material are
 included with generated runtimes. Build archives are verified before extraction.
-Tektronix software remains a user-installed Windows prerequisite. Calibration
+The Windows native transport was added in this repository. It uses SetupAPI and
+the existing RSA3USB3/Cypress-compatible driver interface; it links no Tektronix
+or Cypress userspace library. The compatible USB driver remains a user-installed
+Windows prerequisite. Only the explicitly selected API fallback additionally
+requires the installed x64 Tektronix RSA API. Calibration
 correction reads the attached unit's factory tables; no user's factory table
 bytes or private capture archive belongs in a public release.
 

@@ -1,14 +1,20 @@
 # macOS hardware validation 26 October 2026
 
+This is the historical acceptance report for the package identified below.
+For subsequent work, see the [27 October native transport regression](macos-native-regression-2026-10-27.md),
+[completed RF measurements](rf-validation-2026-10-27.md) and
+[current release status](implementation-status.md).
+
 The CI candidate passed the Mac acquisition, controls, connection recovery and
 30-minute endurance checks below. Desktop displayed real live spectrum and
 waterfall data. A forced Desktop crash left the plugin running, as documented
 for the public core 1.4 SDK; targeted cleanup and a fresh device connection
 succeeded.
 
-This is functional test evidence for one analyzer and one package. Independent
-signal-generator measurements remain pending. It does not qualify a different
-ZIP or establish absolute amplitude accuracy.
+This is functional test evidence for one analyzer and one package. The generator
+campaign and numerical bridge were documented the following day, with their
+measurement limits. Neither this report nor those measurements qualify a
+different ZIP automatically or establish absolute amplitude accuracy.
 
 ## Package and environment
 
@@ -110,8 +116,10 @@ locally under `.evidence/mac-acceptance-20261026/`; the acceptance client is und
 `.evidence/mac-acceptance-tools/`. These include machine-specific information and
 are excluded from public source and release assets.
 
-Release qualification remains pending. Independent signal-generator measurements,
-Windows acceptance of this same ZIP and installation through Lab are still
-required. The previously tested Windows local candidate has a different hash.
-The user manual and launch-instruction updates are newer than this CI package;
-including them in a rebuilt ZIP creates a new candidate identity.
+This historical ZIP was not fully qualified for release. Subsequent generator
+evidence and native Windows/Mac tests are recorded in the linked reports; those
+platform tests used a different CI artifact. The final candidate still needs
+the [remaining release checks](rsa306b-validation.md#remaining-release-checks),
+including Lab installation. The user manual and launch-instruction updates are
+newer than this CI package; including them in a rebuilt ZIP creates a new
+candidate identity.

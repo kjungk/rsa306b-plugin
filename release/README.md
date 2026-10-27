@@ -6,6 +6,22 @@ API fallback. SoundBase supplies Node. Windows users need the compatible
 Tektronix RSA USB driver; only the API fallback also needs the installed x64
 RSA API. A successful mock test is not hardware or amplitude-accuracy qualification.
 
+## Current release position
+
+The native Windows work and Mac regression results are merged into `main`.
+Plugin 0.1.0 remains a development candidate. The
+[implementation status](../docs/implementation-status.md) links the completed
+hardware and RF reports; the
+[remaining release checks](../docs/rsa306b-validation.md#remaining-release-checks)
+define what is still needed for one qualified ZIP. No gate in
+`release/qualification.json` is passed solely by merging the source.
+
+The tested CI artifact from commit `b3735bf` remains unchanged. Later build,
+test-client and documentation fixes are on `main`. The packer includes Markdown
+documentation, so even a documentation-only rebuild produces different package
+bytes. Finish the intended edits before freezing the next candidate, then keep
+that ZIP and its checksum unchanged through qualification and publication.
+
 ## Assemble both runtimes
 
 Use Python 3.11+ and Node 20+. The Mac build additionally needs Apple command-line
@@ -27,7 +43,7 @@ python scripts/build-native-windows.py --python-zip C:/path/to/python-3.14.9-emb
 
 Both commands accept `--output PATH` and `--replace`. Replacement is limited to
 an existing generated runtime with a `runtime.json`. Both native builders also
-accepts `--cmake PATH` and `--ctest PATH` (or `CMAKE_EXECUTABLE` /
+accept `--cmake PATH` and `--ctest PATH` (or `CMAKE_EXECUTABLE` /
 `CTEST_EXECUTABLE`). Build work/logs remain under `build/`; output goes under
 `runtime/darwin-arm64/` and `runtime/win32-x64/` by default. These are generated
 assets and are not committed. Native builds run offline CTest tests. The Mac
@@ -95,19 +111,27 @@ folder or changes drivers/security settings.
 CI runs Node tests on Linux, macOS arm64 and Windows x64; builds native runtimes;
 assembles one candidate ZIP; and runs extracted-package mock checks on both
 supported targets. The `plugin-zip` artifact is the exact candidate to qualify.
+CI runs on pushes to `main`, pull requests and manual dispatch. Download and
+extract the outer Actions artifact, then use its inner `rsa306b-VERSION.zip`;
+the artifact-container digest is different from the inner plugin ZIP digest
+recorded by `package-report.json` and the qualification reports.
 The Release workflow defaults to the same rehearsal and never publishes merely
 because a tag was pushed. CI stores native runtimes in tar files so artifact
 transport preserves executable permissions.
 
-Before qualification, bump the version with the template's `npm run bump`,
-commit source and lockfile, and build a successful candidate. Perform macOS and
+Before qualification, choose an unreleased version. If a version change is
+needed, use the template's `npm run bump`; then commit source, documentation and
+lockfile on `main` and build a successful candidate. Perform macOS and
 Windows hardware acceptance and targeted signal-generator confirmations using
 that exact ZIP. The completed SMHU campaign and its numerical replay are retained
 in [the RF validation record](../docs/rf-validation-2026-10-27.md); do not discard
 that evidence or present it as a test of different package bytes. The generator
 model, calibration, source uncertainty, cables, tested
 frequencies/levels, LF/RF boundary behavior and untested range must be recorded.
-The repository's initial `qualification.json` deliberately has every gate pending.
+The repository's `qualification.json` deliberately retains every gate as pending
+until acceptance of one candidate is complete. Individual hardware-client
+reports with `automated_status: passed` and overall `status: partial` are useful
+evidence, but they do not satisfy a completed release gate by themselves.
 
 Fill `release/qualification.json` with the candidate's `source_commit`, version
 and `artifact_sha256` from `package-report.json`. Each of `macos_hardware`,

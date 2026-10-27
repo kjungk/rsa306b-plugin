@@ -1,18 +1,61 @@
-# Implementation and validation record — 2026-10-26
+# Implementation and release status
 
-This is the historical 26 October record. For later evidence, see the
-[Mac CI-package results](macos-validation-2026-10-26.md),
-[Mac transport regression](macos-native-regression-2026-10-27.md),
-[completed generator measurements and numerical replay](rf-validation-2026-10-27.md),
-and [native Windows tests](windows-native-validation-2026-10-27.md).
-The local candidate and Windows API results below refer to an earlier ZIP.
+Updated **27 October 2026** for plugin **0.1.0**.
 
-The official-template RSA306B implementation is complete as a **development
-candidate**. Public release qualification is pending. Nothing was installed into
-SoundBase, published to GitHub/Lab, or changed in the original `tektronix-ui`
-repository during this implementation.
+The unified native implementation is merged into `main` and pushed to GitHub.
+Both macOS arm64 and Windows x64 use the native backend by default. Windows
+keeps the existing Tektronix RSA USB driver and offers an explicit vendor-API
+fallback. The implementation is a **development candidate**; no public release
+or SoundBase Lab approval has been completed.
 
-## Candidate
+## Completed validation
+
+| Evidence | Completed result | Scope |
+| --- | --- | --- |
+| [Windows native tests](windows-native-validation-2026-10-27.md) | Development package: acquisition, controls, lifecycle, physical disconnect/reconnect and a 2,877-trace, 30-minute soak | Development ZIP `acc6deaa…`, LLVM-MinGW worker; not a publishable artifact |
+| [Windows CI-package tests](windows-native-validation-2026-10-27.md#ci-candidate-hardware-results-and-vendor-handoff) | 54 fresh traces across acquisition, controls and lifecycle; official API acquired afterward and the operator confirmed a live SignalVu spectrum | CI ZIP `2eb4df2c…`, MSVC worker; SSH administrator token on TPX1 |
+| [Mac transport regression](macos-native-regression-2026-10-27.md) | 54 fresh traces across the same suites; clean process exit and unchanged package files | The same CI ZIP `2eb4df2c…`, arm64 worker |
+| [Earlier Mac acceptance](macos-validation-2026-10-26.md) | Acquisition, physical reconnect, 30-minute soak and Desktop checks | An earlier package; its results do not qualify newer bytes |
+| [RF measurements and replay](rf-validation-2026-10-27.md) | 420 SMHU bursts replayed with exact Mac numerical agreement; three representative bursts agreed on Windows within 1.211×10⁻¹¹ dB; completed modulated-signal campaign retained | Working-reference measurements and software agreement; absolute accuracy remains unverified |
+
+The shared CI artifact was built from clean commit
+`b3735bfe77f62802b73a3b66309395911b6eff5d` by
+[run 40490219354](https://github.com/kjungk/rsa306b-plugin/actions/runs/40490219354).
+Its inner ZIP SHA-256 is
+`2eb4df2cd7c0f486e8050aece66cf64cbb141a77a807695f85438afabd14c971`.
+All 11 CI jobs passed, and the extracted package's real-worker mocks passed on
+both targets. The local packaging suite subsequently passed 15 tests, including
+the Windows metadata UTF-8 fix.
+
+Commit `d3c59e5` added acceptance reports, the expected-contention classification
+fix in the hardware client, and explicit UTF-8 decoding in the Windows builder.
+The builder fix corrects generated metadata, not the worker's already-correct
+UTF-8 output. These changes and later documentation updates do not alter the
+retained CI ZIP. A new package has a new identity and needs its own qualification.
+
+## Before public release
+
+The [remaining release checks](rsa306b-validation.md#remaining-release-checks)
+cover final-package soak/reconnect, Desktop rendering and lifecycle, ordinary
+Windows user permissions and clean-PC setup, targeted RF confirmation and
+documented measurement limits. Then complete the
+[immutable-candidate publication workflow](../release/README.md), Lab submission,
+review and installation checks. `release/qualification.json` remains pending.
+
+The driver is unchanged and SignalVu handoff passed for sequential use. This
+does not establish simultaneous acquisition or a driver-free Windows installer.
+Raw private recordings and calibration dumps remain outside public source and
+release assets.
+
+## Historical implementation record — 26 October 2026
+
+The following results retain the original local candidate and Windows API test
+identity. They predate the native Windows backend and must not be used to
+qualify it. During that initial implementation, no plugin was installed in
+SoundBase, no GitHub/Lab release was published, and the original `tektronix-ui`
+repository was not modified.
+
+### Candidate
 
 Local artifact: `dist/candidate-02/rsa306b-0.1.0.zip` (15,039,412 bytes,
 983 checksummed files), containing both `darwin-arm64` and `win32-x64` runtimes.
@@ -28,10 +71,10 @@ it was built before the implementation changes were committed. Committing the
 source does not change that ZIP or its qualification status; the publication
 gate correctly rejects it. A committed-source CI candidate must be built and its exact bytes qualified
 before public release; this record must not be used to approve a different ZIP.
-The current source includes a separate opt-in hardware-check client; it is not a
+The source included a separate opt-in hardware-check client; it is not a
 plugin runtime dependency and does not change the candidate payload.
 
-## Passed checks
+### Passed checks
 
 | Check | Result |
 | --- | --- |
@@ -49,7 +92,7 @@ plugin runtime dependency and does not change the candidate payload.
 | Windows cleanup | No candidate plugin/acquisition worker remained running; package files unchanged |
 | Source hygiene | `git diff --check` passed; original source repository remained clean |
 
-## Windows acquisition subset
+### Windows API acquisition subset
 
 The user confirmed the analyzer was available and other acquisition applications
 were closed. Tests ran against the extracted candidate in a separate temporary
@@ -75,22 +118,3 @@ Local detailed reports are retained in `.evidence/windows-candidate-02/` and
 `build/mac-package-readonly-02.json`. Private numerical-comparison output is
 retained under `native/build/`. Those local evidence files are excluded from
 public source and release assets.
-
-## Release status after subsequent work
-
-The Mac CI-package acquisition, disconnect/reconnect, Desktop rendering and
-30-minute soak passed on 26 October. The controlled SMHU and modulated campaigns
-completed on 27 October; their numerical bridge and limits are recorded in the
-linked RF report. Those tasks must no longer be described as unperformed.
-
-The native Windows backend passed development acquisition, controls, lifecycle,
-physical disconnect/reconnect and a 30-minute soak on TPX1. A separate clean CI
-ZIP passed Windows acquisition, controls and lifecycle checks, followed by
-successful official-API acquisition and user-confirmed live SignalVu handoff.
-The same CI ZIP passed a 54-trace Mac transport regression. See the linked
-reports for artifact identities and the remaining final-package endurance,
-disconnect, Desktop and clean-PC qualification checks.
-Final release qualification must still be tied to the exact ZIP, followed by Lab
-screenshot, submission, approval and installation checks.
-`release/qualification.json` remains pending; this historical Windows API subset
-cannot qualify the newer native worker.

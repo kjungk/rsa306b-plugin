@@ -1,17 +1,24 @@
 # Tektronix RSA306B for SoundBase
 
-A spectrum-analyzer plugin built from the official SoundBase template, with a
+A spectrum-analyzer plugin built from the official SoundBase template, with
 shared native acquisition on Apple silicon and Windows x64. Windows retains an
 optional Tektronix API fallback.
 
-**Development candidate — not yet qualified for public release.** The intended
-range is **9 kHz–6.2 GHz** on both platforms. Practical generator and modulated
-RF measurements are complete in the original implementation; the
-[RF validation record](docs/rf-validation-2026-10-27.md) bridges that evidence.
-Final-package acceptance on both platforms remains pending. Synthetic tests do
-not establish RF accuracy. See [validation and remaining gates](docs/rsa306b-validation.md).
+**Development candidate — not yet qualified for public release.** Native
+acquisition over **9 kHz–6.2 GHz**, controls and lifecycle checks passed on the
+same CI package: [54 fresh traces on Windows](docs/windows-native-validation-2026-10-27.md)
+and [54 on Mac arm64](docs/macos-native-regression-2026-10-27.md). A Windows
+development package also passed physical disconnect/reconnect and a 30-minute,
+2,877-trace soak. SignalVu acquired normally after the native tests.
 
-| Platform | Runtime | Initial hardware qualification |
+The [RF validation record](docs/rf-validation-2026-10-27.md) preserves the
+completed generator and modulated-signal measurements and numerical replay.
+These results have distinct artifact identities and measurement limits;
+qualification of one final ZIP is still pending. See the
+[current status](docs/implementation-status.md) and
+[remaining release checks](docs/rsa306b-validation.md#remaining-release-checks).
+
+| Platform | Runtime | Tested device and backend |
 | --- | --- | --- |
 | macOS 14+, arm64 | Bundled C++ worker and libusb | RSA306B HW7, firmware 1.7, FPGA 2.1 |
 | Windows x64 | Bundled native worker; existing Tektronix RSA USB driver. Bundled Python for optional API fallback | Native: RSA306B HW7 / 1.7 / 2.1; fallback reference API 5.8.0275.0 |
@@ -30,10 +37,12 @@ Once the release is qualified and approved, install **Tektronix RSA306B** from
 SoundBase Lab. SoundBase supplies the JavaScript runtime; recipients do not need
 Node, Python, a compiler or Homebrew. Windows users must separately install the
 compatible Tektronix RSA USB driver (also supplied with SignalVu-PC). The native
-backend does not need RSA_API.dll. The API fallback requires the x64 API as well.
+backend does not need RSA_API.dll or a separate Python installation. The API
+fallback requires the x64 API as well. Keep an existing working SignalVu driver;
+do not replace it with WinUSB or Zadig. SignalVu can remain installed, but must
+be closed during plugin acquisition.
 [Vendor downloads](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer)
-provide the software and its installation instructions. Keep SignalVu and other
-analyzer applications closed while using SoundBase.
+provide the software and its installation instructions.
 
 Select the analyzer by its serial number in SoundBase's live-scan picker.
 Settings and traces use the standard SoundBase controls; the plugin has no
@@ -45,7 +54,8 @@ withheld rather than filled with invented data.
 
 The **Windows acquisition backend** setting defaults to **Native USB**. Stop
 and close live scans before switching to the API fallback. Its optional
-**Tektronix API path (Windows fallback)** accepts an absolute DLL path or directory. Leave it empty for standard installed locations. Advanced
+**Tektronix API path (Windows fallback)** accepts an absolute DLL path or
+directory. Leave it empty for standard installed locations. Advanced
 worker/Python path overrides are also explicit plugin settings; device selection
 never depends on a machine-local settings file.
 
@@ -58,6 +68,9 @@ notarized or publisher-signed. Installation must work under the target machine's
 normal security policy; the installer does not disable system protections.
 
 ## Development
+
+The unified implementation is maintained on `main`. Both platform runtimes are
+built from this source; there is no separate Windows source branch to install.
 
 Node 20+ is required for development. Install the pinned public SDK:
 

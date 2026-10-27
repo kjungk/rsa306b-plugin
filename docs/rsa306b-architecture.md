@@ -70,8 +70,14 @@ children rather than detached daemons. Core 1.4 does not provide a Desktop host
 lifeline; an alive plugin does not learn that Desktop was force-killed. This
 limitation is documented, not concealed by declaring unreleased core 1.5.
 
-Windows native and API workers share one named mutex, while native USB opens
-the driver with exclusive sharing. The native worker retains its mutex and USB
+Windows native and API workers share one named mutex. Native USB requests a
+driver handle with share mode zero, but the tested driver still allows another
+application to open a handle. The mutex coordinates cooperating plugin workers;
+it does not prevent SignalVu from accessing the device. Other acquisition
+applications must remain closed. Sequential native-to-SignalVu handoff passed
+on TPX1; concurrent acquisition is unsupported.
+
+The native worker retains its mutex and USB
 request storage through Stop and cancellation. Sixteen queued bulk transfers
 are delivered in submission order even when completion notifications arrive out
 of order. Cancellation drains have finite deadlines; if a driver request cannot
@@ -88,7 +94,13 @@ Production never falls back to fake data after a runtime or USB failure. Missing
 runtimes in a requested real-worker test fail the test instead of silently
 skipping it.
 
-The TPX1 driver test found that `CreateFile` share mode zero does not reject a
-second raw driver handle. The named mutex coordinates this plugin's native/API
-workers; it does not cover SignalVu. User instructions require other acquisition
-applications to remain closed, and only sequential SignalVu handoff is claimed.
+## Validation evidence
+
+The native implementation is maintained on `main` for both targets. A common
+CI package passed acquisition, controls and lifecycle hardware suites on
+[Windows](windows-native-validation-2026-10-27.md) and
+[Mac arm64](macos-native-regression-2026-10-27.md). The Windows development
+package additionally passed physical reconnect and a 30-minute soak. These
+reports identify distinct package bytes; see the
+[release checks](rsa306b-validation.md#remaining-release-checks) for the
+outstanding qualification of one final artifact.

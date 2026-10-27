@@ -7,12 +7,14 @@ Desktop. Select your analyzer in a Coord project's live-scan settings, choose
 the frequency range, and use SoundBase's plot and trace controls. The plugin
 has no separate application window.
 
-**Current status: development candidate.** Earlier candidates passed Mac
-functional and endurance tests and Windows API acquisition checks. Practical
-signal-generator and modulated-signal measurements are documented in the
-[RF validation record](rf-validation-2026-10-27.md). The native Windows backend
-is new; qualification of one final package remains pending. This is not yet an
-approved Lab release or a certified amplitude measurement system.
+**Current status: development candidate.** Native acquisition, controls and
+restart tests passed on both Windows x64 and Mac arm64 using the same CI
+package. Windows development-package disconnect/reconnect and a 30-minute
+soak also passed, followed by successful acquisition in SignalVu. The
+[current status](implementation-status.md) identifies the tested packages and
+remaining release checks; the [RF validation record](rf-validation-2026-10-27.md)
+documents generator measurements and their limits. This is not yet an approved
+Lab release or a certified amplitude measurement system.
 
 ## Contents
 
@@ -22,6 +24,7 @@ approved Lab release or a certified amplitude measurement system.
 - [Adjust the scan](#adjust-the-scan)
 - [Understand the measurements](#understand-the-measurements)
 - [Plugin and device settings](#plugin-and-device-settings)
+- [Use SignalVu on the same Windows computer](#use-signalvu-on-the-same-windows-computer)
 - [Troubleshooting](#troubleshooting)
 - [Stop scanning and recover the analyzer](#stop-scanning-and-recover-the-analyzer)
 - [Updates and existing projects](#updates-and-existing-projects)
@@ -36,13 +39,19 @@ approved Lab release or a certified amplitude measurement system.
 | SoundBase | SoundBase Desktop for Apple silicon with plugin support | SoundBase Desktop for Windows x64 with plugin support |
 | Analyzer | RSA306B hardware revision 7, firmware 1.7, FPGA 2.1 | Native: the same HW7 / 1.7 / 2.1 combination; API fallback: RSA306B supported by the installed API |
 | Acquisition software | Included in the complete plugin package | Native worker included; compatible Tektronix RSA USB driver installed separately. API fallback additionally needs the x64 RSA API. |
-| USB connection | USB 3 SuperSpeed | USB 3 connection supported by the Tektronix driver |
+| USB connection | USB 3 SuperSpeed | USB 3 SuperSpeed for Native USB |
 
 Use one connected RSA306B and one live scan at a time. Intel Macs, Windows arm64,
 Linux and multiple attached analyzers are outside this version's support.
 The native backend on both platforms refuses other device revisions.
-The Windows acquisition test used API version 5.8.0275.0; that is a tested version,
-not a claim that every other API version is compatible.
+The native Windows tests used `RSA3USB3.sys` version 1.2.3.20. The optional API
+backend and handoff checks used API version 5.8.0275.0. Those are tested versions,
+not a claim that every other driver or API version is compatible.
+
+The latest tests used SoundBase Desktop 2.26.0 on macOS 26.6.2 arm64 and Windows
+11 Pro x64. The Mac runtime is built for macOS 14 or later; validation on every
+supported OS version is not implied. Clean-PC installation and ordinary
+unelevated Windows Desktop operation remain release checks.
 
 You do not need to install Node.js, Python, Homebrew or a compiler to use a
 complete plugin package. SoundBase and the Tektronix installer may have their
@@ -55,6 +64,14 @@ instrument's connection and input-limit instructions in the
 [Tektronix installation and safety manual](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer&type=manual).
 
 ## Install and enable the plugin
+
+### Mac preparation
+
+Use the Apple-silicon version of SoundBase Desktop and a complete plugin
+package. The package includes the native worker and libusb; no Tektronix
+software, separate USB driver, Python or Homebrew installation is needed.
+Connect the RSA306B through USB 3 and close other analyzer applications before
+starting the scan. Intel Macs are not supported.
 
 ### Windows preparation
 
@@ -69,17 +86,17 @@ instrument's connection and input-limit instructions in the
    backend uses the bundled worker and does not load `RSA_API.dll` or Python.
    The Tektronix API path can stay empty.
 
-The driver is still a one-time Windows prerequisite; it is not included in the
-plugin ZIP. The tested driver allows multiple application handles, so it does
-not prevent SignalVu from interfering with a running scan. Keep SignalVu and
-SoundBase acquisition mutually exclusive; stop and close one before starting
-the other. To use the optional **Tektronix API (fallback)** backend, install the
-64-bit RSA API as well. Stop and close all live scans before changing backend.
+The complete ZIP includes the Windows worker and Python for the optional API
+fallback. The USB driver is a separate, one-time prerequisite: this is not a
+driver-free Windows installer. Keep a working SignalVu installation; you do not
+need to uninstall it or start SignalVu before using Native USB. Follow
+[the handoff steps](#use-signalvu-on-the-same-windows-computer) when switching
+applications.
+
+To use the optional **Tektronix API (fallback)** backend, install the 64-bit RSA
+API as well, then follow [the backend-switching steps](#switch-the-windows-backend).
 The fallback searches standard RSA API and SignalVu installation locations; an
 explicit API path is needed only when automatic lookup fails.
-
-macOS uses the acquisition software bundled with the plugin and does not require
-the Windows Tektronix API.
 
 ### Installation through Lab
 
@@ -213,7 +230,8 @@ Hold modes intentionally retain older measurements as well.
 
 For comparisons, keep the frequency range, actual RBW, gain/reference level,
 antenna and cable setup consistent. The current validation scope is recorded in
-the [implementation and validation record](implementation-status.md).
+the [implementation status](implementation-status.md) and
+[RF measurement report](rf-validation-2026-10-27.md).
 
 ## Plugin and device settings
 
@@ -241,6 +259,40 @@ in the device picker.
 The plugin checks the serial when connecting and will not silently substitute
 another unit.
 
+### Switch the Windows backend
+
+1. Stop **Live** and close the analyzer's live-scan connection.
+2. In the plugin settings, choose **Native USB (default)** or
+   **Tektronix API (fallback)**. For the fallback, confirm the x64 API is
+   installed and supply its path only if automatic lookup fails.
+3. Wait for the plugin's prerequisite check to finish, then select the analyzer
+   again in the live-scan settings.
+4. Check the device controls before restarting. Native USB uses **RF attenuation**
+   and **IF gain**; the API fallback uses **Reference level**. Review the accepted
+   scan settings rather than assuming values transfer between backends.
+
+The plugin does not automatically switch to the API if Native USB fails. The
+selected backend and its setup or acquisition error remain visible.
+
+## Use SignalVu on the same Windows computer
+
+Sequential native-plugin use followed by a live SignalVu spectrum passed on
+the tested Windows host. Both applications can remain installed and use the
+existing Tektronix driver. They must not acquire at the same time: the tested
+driver allows multiple handles, and the plugin's ownership check cannot prevent
+SignalVu from accessing an active session.
+
+To switch from SoundBase to SignalVu:
+
+1. Stop **Live**, close the analyzer connection and quit SoundBase normally.
+2. Wait for acquisition to stop, then open SignalVu and connect to the analyzer.
+3. If SignalVu reports the analyzer busy, use the
+   [recovery steps](#stop-scanning-and-recover-the-analyzer) before retrying.
+
+To return to SoundBase, stop acquisition and close SignalVu completely. Start
+SoundBase, select the RSA306B and begin a fresh scan. No driver rebinding or
+routine USB reconnect is part of the normal handoff.
+
 ## Troubleshooting
 
 Start in **Settings → Plugins → Tektronix RSA306B** and read its status and log.
@@ -257,6 +309,7 @@ failure, and runs again after you change plugin settings.
 | Plugin is ready but no analyzer is listed | Connect exactly one RSA306B, check USB 3 connectivity, and close competing applications. Discovery can take several seconds to refresh. A ready plugin does not mean a device is attached. |
 | Unsupported device revision with Native USB | Check hardware, firmware and FPGA versions against the requirements above. Other combinations need maintainer support. |
 | Already open, busy or access error | Close the other live-scan connection and SignalVu-PC or other acquisition software. If this followed a crash, use the recovery steps below. |
+| SignalVu no longer connects after a plugin scan | Quit SoundBase normally and confirm its analyzer connection has closed. If a process remains after a crash, follow the recovery sequence. Keep the existing Tektronix driver. |
 | Selected analyzer differs or serial mismatch | Choose the connected unit again in the device picker; do not reuse another analyzer's saved serial. |
 | Trace is slow to update | Reduce the span and try Auto or a coarser RBW. Wait for a complete pass and check for withheld-sweep warnings. |
 | Incomplete, quality-flagged or missing-sweep warning | Treat the visible trace as older data. Check USB connectivity, overload and gain/reference settings. If the warning specifically reports unobserved output bins, reduce the point count. |
@@ -314,6 +367,7 @@ Report reproducible problems in the
 [GitHub issue tracker](https://github.com/kjungk/rsa306b-plugin/issues), including:
 
 - Plugin version, SoundBase Desktop version, OS version and processor type.
+- Selected Windows backend and USB driver version, when using Windows.
 - Analyzer model and hardware/firmware/FPGA versions, if known; Windows API
   version when relevant.
 - Frequency range, actual RBW, point count, platform controls and trace mode.
@@ -330,6 +384,22 @@ and its Windows API, while plugin integration issues belong in this repository.
 This is a local testing method for a complete package supplied by the maintainer.
 It does not install or approve a Lab release. GitHub's automatically generated
 **Source code** archives are not runnable plugin packages.
+
+If the maintainer supplies a GitHub Actions artifact named **plugin-zip**, first
+extract that outer artifact. Use the inner `rsa306b-0.1.0.zip` and its `.sha256`
+file (substitute the supplied version). Extracting the outer artifact alone
+does not create a runnable plugin folder. Compare the inner ZIP's SHA-256 with
+the supplied checksum before loading it:
+
+```sh
+# macOS; adjust the path to the supplied inner ZIP
+shasum -a 256 "$HOME/Downloads/rsa306b-0.1.0.zip"
+```
+
+```powershell
+# Windows; adjust the path to the supplied inner ZIP
+Get-FileHash -Algorithm SHA256 "$env:USERPROFILE\Downloads\rsa306b-0.1.0.zip"
+```
 
 1. Disable any older RSA306B integration, then quit SoundBase Desktop completely.
 2. Extract the supplied ZIP into a dedicated folder such as `SoundBasePlugins`

@@ -4,17 +4,23 @@
 
 - [Tektronix RSA306B user manual](user-manual.md) — installation, first scan,
   controls, measurement interpretation and troubleshooting on Mac and Windows.
+- [Current implementation and release status](implementation-status.md) —
+  completed tests, package identities and outstanding qualification work.
 
 ## RSA306B implementation
 
 - [Architecture and backend contracts](rsa306b-architecture.md)
-- [Validation and pending hardware/generator gates](rsa306b-validation.md)
+- [Validation procedure and remaining release checks](rsa306b-validation.md)
 - [Completed RF measurements and numerical replay](rf-validation-2026-10-27.md)
 - [Native Windows implementation and hardware tests](windows-native-validation-2026-10-27.md)
-- [Mac hardware test results from 26 October 2026](macos-validation-2026-10-26.md)
-- [Native Windows USB access and SignalVu coexistence investigation](windows-native-investigation-2026-10-26.md)
+- [Mac transport regression from 27 October 2026](macos-native-regression-2026-10-27.md)
 - [Build, immutable candidate and publication workflow](../release/README.md)
 - [Source and dependency provenance](../UPSTREAM.md)
+
+Earlier records describe their original test scope and package bytes:
+
+- [Mac hardware and Desktop tests from 26 October 2026](macos-validation-2026-10-26.md)
+- [Native Windows USB and SignalVu feasibility investigation](windows-native-investigation-2026-10-26.md)
 
 The guides below originate in the official SoundBase template. For this
 plugin's commands and release gates, use the RSA306B pages above.

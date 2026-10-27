@@ -22,7 +22,8 @@ not relicense the following components.
   `3c01d7cfc666f746a6f064f60fb2156ab0ec464d3d738ab796371a46a9bb24a2`.
   Source/release information is at
   <https://www.python.org/downloads/release/python-3149/>. The interpreter is
-  unmodified; the worker runs with isolated imports and bytecode writes disabled.
+  unmodified; the optional Windows API worker runs with isolated imports and
+  bytecode writes disabled. Native USB acquisition does not run Python.
 
 Tektronix software is installed separately under its own terms. No vendor DLL,
 installer, USB driver, firmware image, or per-device calibration dump is included.

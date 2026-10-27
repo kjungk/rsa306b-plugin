@@ -116,7 +116,9 @@ and any broader accuracy, thermal or vendor-detector-equivalence claims. A
 short targeted confirmation on the final package is distinct from repeating the
 whole source-project campaign.
 
-Windows native acquisition still needs transport/lifecycle testing on the real
-device. The final immutable ZIP needs the platform acceptance and report bindings
-in [the validation plan](rsa306b-validation.md); this report does not change
+Native transport and lifecycle hardware checks subsequently passed on
+[Windows](windows-native-validation-2026-10-27.md) and
+[Mac arm64](macos-native-regression-2026-10-27.md). The final immutable ZIP still
+needs the remaining acceptance and report bindings in
+[the validation plan](rsa306b-validation.md#remaining-release-checks); this report does not change
 `release/qualification.json` from pending.

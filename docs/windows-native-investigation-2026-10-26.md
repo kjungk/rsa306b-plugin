@@ -1,5 +1,11 @@
 # Native Windows USB investigation on TPX1
 
+This is the **historical 26 October feasibility report**. Native acquisition,
+reconnect, endurance and subsequent SignalVu handoff were implemented and tested
+on 27 October; see [the native Windows validation report](windows-native-validation-2026-10-27.md)
+and [current status](implementation-status.md). The proposed work below records
+what remained at the time of this descriptor-only investigation.
+
 Investigated on **26 October 2026**. Direct USB access through TPX1's existing
 RSA306B driver succeeded without loading the Tektronix RSA API. The official
 API acquired three fresh spectra before the probe and three afterwards, with
@@ -9,8 +15,8 @@ connected to the analyzer and displayed a live spectrum.
 The strongest route for preserving SignalVu is a native Windows worker that
 uses this existing driver. This would remove the RSA API runtime dependency,
 but a clean Windows computer would still need a compatible USB driver installed.
-Native spectrum acquisition through this transport remains to be implemented
-and tested.
+At the time of this investigation, native spectrum acquisition through this
+transport remained to be implemented and tested.
 
 ## Installed driver
 
@@ -62,7 +68,8 @@ disrupt that acquisition path.
 The SignalVu application result is a user-observed live-spectrum check. Together
 with the automated API checks, it confirms successful return to the existing
 software after this descriptor probe. Handoff after full native acquisition
-remains part of the implementation tests below.
+was still pending at that point and subsequently passed in the linked
+27 October implementation tests.
 
 The Cypress interface is documented in the
 [CyUSB3 Programmer's Reference](https://community.infineon.com/gfawx74859/attachments/gfawx74859/cnusbsuperspeed/1249/1/CyUSB.pdf).
@@ -96,8 +103,9 @@ mutex alone is not proof of exclusion against SignalVu.
 
 The plugin can contain our native executable and its permitted runtime
 dependencies. The proposed direct transport would not need Tektronix's RSA API
-DLLs, SignalVu's installation, or the CyAPI library to acquire data; that remains
-the implementation target rather than an acquisition result from this probe.
+DLLs, SignalVu's installation, or the CyAPI library to acquire data. That was
+the implementation target, not an acquisition result from this descriptor probe;
+the later validation report records the completed native backend.
 
 A machine without the USB driver still needs a one-time driver installation.
 Placing driver files in a plugin ZIP does not register them with Windows.
@@ -106,7 +114,7 @@ redistribution rights for the exact package and retaining valid driver signing.
 An independently packaged Cypress driver would also need the correct hardware
 IDs, interface registration and separate SignalVu compatibility testing.
 
-## Next implementation steps
+## Implementation steps proposed on 26 October
 
 1. Separate the current native protocol/acquisition code from its libusb
    transport. Keep the Mac implementation and add a Windows transport using the
