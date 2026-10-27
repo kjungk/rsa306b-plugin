@@ -2,9 +2,34 @@
   "schema_version": 1,
   "plugin_id": "rsa306b",
   "version": "1.0.0",
+  "artifact_sha256": "b2f82851abb82394923fd042eb86ae968de7f9df8642b2eadb22023bc286826b",
+  "source_commit": "763c8f68fcf8b22edff0864a7ac822a6d4fd1eb9",
   "release_channel": "stable",
-  "status": "pending",
+  "ci_run_id": 40535746568,
+  "status": "passed",
   "scope": "macOS arm64 release acceptance",
-  "artifact_sha256": null,
-  "source_commit": null
+  "basis": "unchanged implementation with carried-forward validation",
+  "previous_qualification": {
+    "version": "0.1.0",
+    "artifact_sha256": "8c6cc6403b6f13e1af82ecc0a9c66ce647eb25c6b771247041d0f3731c3ffc83",
+    "source_commit": "bc2888395e451c37c233251b16baeefe87bc55e2",
+    "report": "https://github.com/kjungk/rsa306b-plugin/releases/download/v0.1.0/macos.json",
+    "report_sha256": "b810b5d315349c8be7db0dfa182c080787f93fee796cc675456486ca4912fa28"
+  },
+  "source_review": {
+    "status": "passed",
+    "summary": "Only version metadata, documentation, release qualification and publication channel changed; acquisition code, native build recipes, dependencies and CI remain unchanged.",
+    "native_source_tree": "daefe5d6470368868d3eb4f009a74d5603bf98ec",
+    "driver_source_tree": "820ed6eb90d6324c15bf5ff7ef24f0b9499cb230",
+    "normalized_dependency_lock_sha256": "3c4efc8c1af6ead7fdf49a2e61cf700f8905e5b88006b4f0e1620678142b4fd9"
+  },
+  "candidate_checks": {
+    "archive_verification": "passed",
+    "ci": "https://github.com/kjungk/rsa306b-plugin/actions/runs/40535746568",
+    "ci_jobs_passed": 11,
+    "packaged_target_workers": "macOS arm64 and Windows x64 real workers passed mock acquisition from the extracted ZIP",
+    "package_comparison": "954 of 966 package files are byte-identical to v0.1.0. Changes are version metadata, documentation, rebuilt native binaries and corresponding manifests/checksums. Executable instruction sections in both workers and bundled libusb are byte-identical; source, dependency and build provenance review passed."
+  },
+  "acceptance": "The completed acquisition, controls, lifecycle, Desktop, disconnect/reconnect and endurance checks remain applicable to the unchanged implementation. Fresh CI build and extracted-package checks passed. No new physical acquisition or Desktop interaction is claimed for the 1.0.0 ZIP.",
+  "installation_scope": "Apple silicon on macOS 14 or later."
 }
