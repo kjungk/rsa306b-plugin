@@ -78,5 +78,6 @@ jobs:
             test "$?" = 2
           fi
           gh release create "$TAG" "dist/rsa306b-$VERSION.zip" "dist/rsa306b-$VERSION.zip.sha256" \
-            release/qualification.json --repo "$GITHUB_REPOSITORY" --target "$SOURCE" \
-            --prerelease --title "Tektronix RSA306B $VERSION beta" --generate-notes
+            release/qualification.json release/reports/*.json \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE" \
+            --prerelease --title "Tektronix RSA306B $VERSION beta" --notes-file release/NOTES.md

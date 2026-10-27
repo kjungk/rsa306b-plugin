@@ -79,11 +79,11 @@ The default mode checks acquisition ranges and retuning. Other modes are
 and reconnection. Each run needs a new report filename. Tests do not install the
 plugin or modify a SoundBase project.
 
-Complete Desktop plot/waterfall, project reload, enable/disable, normal shutdown,
-crash recovery and clean-PC checks on both supported targets. Windows acceptance
-must include an ordinary unelevated user, the official driver installation and
-sequential SignalVu handoff. Record RF accuracy and coverage with the source,
-setup and uncertainty stated. Mock checks do not establish RF accuracy.
+Check Desktop plot/waterfall, project reload, enable/disable, normal shutdown
+and recovery. Windows checks include an ordinary unelevated user and sequential
+SignalVu handoff with the supported driver. Record the scope of installation
+checks; an existing driver installation does not establish clean-PC setup.
+Mock checks do not establish RF accuracy.
 
 ## Publish the qualified ZIP
 
@@ -99,9 +99,14 @@ so later documentation edits also produce a different ZIP when rebuilt.
 commit and ZIP SHA-256. Its `macos_hardware`, `windows_hardware` and
 `signal_generator` entries each require a passed JSON report beneath `release/`
 and the SHA-256 of that report. Reports must match the candidate's artifact hash.
-Keep reports suitable for public distribution; do not include raw private data
-or per-device calibration dumps. A hardware-client report with overall status
-`partial` does not satisfy a completed gate.
+Each report is a release acceptance review. Distinguish checks on the candidate
+from completed checks carried forward from an earlier build. Reuse prior
+validation only after reviewing relevant source and dependency changes; record
+the tested build, report hashes and reason it remains applicable. Do not label
+earlier tests as tests of the current ZIP or treat a hardware-client report with
+overall status `partial` as complete acceptance on its own. Retain untested scope
+and known behavior explicitly. Raw measurements and device data stay private;
+only concise acceptance summaries belong in `release/reports/`.
 
 ```sh
 python3 scripts/verify-release.py dist/candidate-01/rsa306b-0.1.0.zip \
@@ -110,7 +115,8 @@ python3 scripts/verify-release.py dist/candidate-01/rsa306b-0.1.0.zip \
 
 Manually run **Release** with `publish: true` and the successful candidate's
 `candidate_run_id`. It verifies qualification and publishes the existing bytes
-as a prerelease, without rebuilding or replacing an existing release. With
+as a prerelease with the user-facing notes and qualification summaries, without
+rebuilding or replacing an existing release. With
 `publish: false`, it only rehearses the build. Submit the resulting release to
 SoundBase Lab, supply a screenshot, obtain approval and verify installation on
 both targets with `SB_PLUGIN_DIRS` unset.

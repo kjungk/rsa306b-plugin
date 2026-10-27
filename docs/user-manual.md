@@ -7,9 +7,8 @@ Desktop. Select your analyzer in a Coord project's live-scan settings, choose
 the frequency range, and use SoundBase's plot and trace controls. The plugin
 has no separate application window.
 
-**Development version.** Public release qualification and Lab approval are
-pending. Factory-corrected dBm readings do not constitute a certified amplitude
-accuracy specification.
+**0.1.0 beta.** Installation through SoundBase Lab becomes available after the
+listing is approved. The native backend uses the analyzer's factory calibration.
 
 ## Contents
 
@@ -90,9 +89,8 @@ explicit API path is needed only when automatic lookup fails.
 
 ### Installation through Lab
 
-These steps apply **once an approved release is available**. The current
-development candidate is not yet listed as an approved release. If the maintainer
-has supplied a complete evaluation ZIP, use
+These steps apply **once an approved release is available**. Until then, use the
+complete ZIP attached to the GitHub release and follow
 [Load a supplied evaluation package](#load-a-supplied-evaluation-package).
 
 1. Open [SoundBase Lab](https://lab.soundbase.app), sign in if requested, and find
