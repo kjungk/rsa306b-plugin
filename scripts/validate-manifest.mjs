@@ -35,14 +35,3 @@ process.stdout.write(
 for (const product of products) {
   process.stdout.write(`  product:  ${product.deviceTypeId}\n`);
 }
-
-// The id namespaces every deviceTypeId you publish and appears in a user's
-// saved projects, so changing it later strands their configured devices.
-if (id === 'template') {
-  process.stderr.write(
-    '\nWARNING: the manifest id is still "template". Run `npm run rename ' +
-      '<your-id>` before publishing — the id namespaces your deviceTypeIds ' +
-      "and is stored in users' projects, so it cannot be changed painlessly " +
-      'later.\n'
-  );
-}

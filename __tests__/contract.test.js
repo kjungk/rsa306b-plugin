@@ -1,4 +1,4 @@
-// Contract tests retain the template's real shell and exercise a child worker.
+// Contract tests exercise the actual SoundBase shell and a synthetic child worker.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

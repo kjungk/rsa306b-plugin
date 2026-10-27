@@ -8,7 +8,7 @@ runtime/
 __pycache__/
 *.pyc
 
-# Local build/test/measurement outputs
+# Local build and test outputs
 build/
 native/build*/
 .cache/

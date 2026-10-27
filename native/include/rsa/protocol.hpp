@@ -82,7 +82,7 @@ class Session {
 public:
     // One construction attempt per worker process, including failed opens.
     // Repeated configure/acquire is supported until the first error. Reconnect
-    // requires a fresh worker process; see docs/rsa306b-validation.md.
+    // requires a fresh worker process.
     explicit Session(std::function<bool()> cancelled,
                      std::function<void(bool, std::span<const std::uint8_t>)> trace = {});
     ~Session();

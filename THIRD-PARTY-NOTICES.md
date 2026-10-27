@@ -5,8 +5,8 @@ not relicense the following components.
 
 - **SoundBase plugin shell and contract 0.12.2** are BUSL-1.1 with the SoundBase
   Additional Use Grant. Their JavaScript source and full licenses are retained
-  under `node_modules/@soundbase/`. The template's original license is retained
-  as `LICENSE-TEMPLATE`. The grant permits developing and distributing plugins
+  under `node_modules/@soundbase/`. SoundBase-provided bootstrap and tooling
+  retain the same license in `LICENSE-SOUNDBASE`. The grant permits developing and distributing plugins
   for SoundBase; it does not authorize use in SoundBase substitutes.
 - **Zod** is MIT licensed. The exact version and integrity are recorded in
   `package-lock.json`; its source and license are in `node_modules/zod/`.

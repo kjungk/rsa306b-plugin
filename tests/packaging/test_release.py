@@ -22,7 +22,7 @@ def fixture(directory, *, dirty=False):
     pe[64:68] = b'PE\0\0'
     struct.pack_into('<H', pe, 68, 0x8664)
     files = {name: b'fixture' for name in ['main.js', 'adapter.js', 'package-lock.json', 'LICENSE',
-        'LICENSE-TEMPLATE', 'THIRD-PARTY-NOTICES.md', 'driver/windows/worker.py',
+        'LICENSE-SOUNDBASE', 'THIRD-PARTY-NOTICES.md', 'driver/windows/worker.py',
         'sources/native/CMakeLists.txt', 'sources/scripts/build-native.py', 'sources/scripts/build-native-windows.py',
         'sources/scripts/assemble-runtime.py', 'sources/release/runtime-pins.json',
         'runtime/darwin-arm64/sources/libusb-1.0.30.tar.bz2', 'runtime/win32-x64/LICENSE.txt']}

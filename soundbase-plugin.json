@@ -28,10 +28,6 @@
   "deployment": [
     "managed"
   ],
-  "template": {
-    "name": "soundbase-plugin-template",
-    "version": "1.0.15"
-  },
   "products": [
     {
       "deviceTypeId": "plugin:rsa306b/rsa306b",

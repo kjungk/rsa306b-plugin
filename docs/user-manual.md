@@ -7,14 +7,9 @@ Desktop. Select your analyzer in a Coord project's live-scan settings, choose
 the frequency range, and use SoundBase's plot and trace controls. The plugin
 has no separate application window.
 
-**Current status: development candidate.** Native acquisition, controls and
-restart tests passed on both Windows x64 and Mac arm64 using the same CI
-package. Windows development-package disconnect/reconnect and a 30-minute
-soak also passed, followed by successful acquisition in SignalVu. The
-[current status](implementation-status.md) identifies the tested packages and
-remaining release checks; the [RF validation record](rf-validation-2026-10-27.md)
-documents generator measurements and their limits. This is not yet an approved
-Lab release or a certified amplitude measurement system.
+**Development version.** Public release qualification and Lab approval are
+pending. Factory-corrected dBm readings do not constitute a certified amplitude
+accuracy specification.
 
 ## Contents
 
@@ -44,14 +39,9 @@ Lab release or a certified amplitude measurement system.
 Use one connected RSA306B and one live scan at a time. Intel Macs, Windows arm64,
 Linux and multiple attached analyzers are outside this version's support.
 The native backend on both platforms refuses other device revisions.
-The native Windows tests used `RSA3USB3.sys` version 1.2.3.20. The optional API
-backend and handoff checks used API version 5.8.0275.0. Those are tested versions,
-not a claim that every other driver or API version is compatible.
-
-The latest tests used SoundBase Desktop 2.26.0 on macOS 26.6.2 arm64 and Windows
-11 Pro x64. The Mac runtime is built for macOS 14 or later; validation on every
-supported OS version is not implied. Clean-PC installation and ordinary
-unelevated Windows Desktop operation remain release checks.
+Compatible Windows software includes `RSA3USB3.sys` version 1.2.3.20 and, for
+the optional API backend, x64 RSA API 5.8.0275.0. Other driver and API versions
+may need additional compatibility checks.
 
 You do not need to install Node.js, Python, Homebrew or a compiler to use a
 complete plugin package. SoundBase and the Tektronix installer may have their
@@ -79,7 +69,7 @@ starting the scan. Intel Macs are not supported.
    [Tektronix installer](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer).
    SignalVu-PC also supplies this driver. If SignalVu already works with the
    analyzer, keep that driver. Do not replace it with WinUSB or use Zadig.
-   The tested driver is `RSA3USB3.sys` version 1.2.3.20.
+   The compatible driver is `RSA3USB3.sys` version 1.2.3.20.
 2. Connect the RSA306B and allow driver installation to finish. If you use
    SignalVu-PC to check the connection, close it completely afterwards.
 3. Leave **Windows acquisition backend** at **Native USB (default)**. This
@@ -229,9 +219,8 @@ that new sweeps arrive before interpreting the display as current RF activity.
 Hold modes intentionally retain older measurements as well.
 
 For comparisons, keep the frequency range, actual RBW, gain/reference level,
-antenna and cable setup consistent. The current validation scope is recorded in
-the [implementation status](implementation-status.md) and
-[RF measurement report](rf-validation-2026-10-27.md).
+antenna and cable setup consistent. Account for external losses and check the
+complete measurement setup before relying on an absolute level.
 
 ## Plugin and device settings
 
@@ -276,11 +265,10 @@ selected backend and its setup or acquisition error remain visible.
 
 ## Use SignalVu on the same Windows computer
 
-Sequential native-plugin use followed by a live SignalVu spectrum passed on
-the tested Windows host. Both applications can remain installed and use the
-existing Tektronix driver. They must not acquire at the same time: the tested
-driver allows multiple handles, and the plugin's ownership check cannot prevent
-SignalVu from accessing an active session.
+Both applications can remain installed and use the existing Tektronix driver
+one at a time. They must not acquire simultaneously: the driver allows multiple
+handles, and the plugin's ownership check cannot prevent SignalVu from accessing
+an active session.
 
 To switch from SoundBase to SignalVu:
 
@@ -376,7 +364,7 @@ Report reproducible problems in the
 
 Remove private project details from shared logs. For evaluation packages,
 include the ZIP filename and supplied checksum so the maintainer can identify
-the tested build. This is a community plugin; Tektronix provides the instrument
+the supplied build. This is a community plugin; Tektronix provides the instrument
 and its Windows API, while plugin integration issues belong in this repository.
 
 ## Load a supplied evaluation package

@@ -41,7 +41,7 @@ const report = {
     : 'No ZIP digest supplied; this report alone cannot identify an immutable release candidate.',
   started_at: new Date().toISOString(), max_duration_seconds: maxSeconds,
   stages: [], warning_events: {}, failed_device_events: [],
-  pending: [...Object.values(modeGate),'Desktop plot/waterfall and project reload check','normal Desktop exit and enable/disable check','targeted final-package RF confirmation (existing SMHU evidence separately replayed)','controlled hard-host-crash recovery'],
+  pending: [...Object.values(modeGate),'Desktop plot/waterfall and project reload check','normal Desktop exit and enable/disable check','final-package RF accuracy and coverage check','controlled hard-host-crash recovery'],
 };
 function classifyFailedEvents() {
   const rejected=mode==='lifecycle'&&report.stages.some(stage=>stage.name==='competing-owner-rejected'&&stage.status==='passed'&&

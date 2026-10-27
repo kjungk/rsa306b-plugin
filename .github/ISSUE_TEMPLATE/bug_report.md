@@ -1,35 +1,30 @@
 ---
 name: Bug report
-about: Something in the template itself is wrong or does not work
+about: Report a problem with the Tektronix RSA306B plugin
 labels: bug
 ---
 
-**What happened**
+**Problem and expected behavior**
 
-**What you expected**
+**Steps to reproduce**
 
-**Reproduction**
+**Environment**
 
-```sh
-# the commands you ran
-```
+- Plugin version and package checksum, if available:
+- SoundBase Desktop version:
+- OS version and processor architecture:
+- RSA306B hardware, firmware and FPGA versions:
+- Windows backend and USB driver/API versions, if applicable:
 
-**Output of `npm run doctor`**
+**Scan settings**
 
-```
-# this covers the setup: Node, the SDK, the manifest, the adapter, the licence
-```
+Frequency range, actual RBW, point count, gain/reference level and trace mode:
 
-**Output of `npm run smoke`**
+**Errors or logs**
 
-```
-# paste it — this tells us whether the plugin booted and handshaked at all
-```
+Include the exact plugin error and relevant log lines. Remove private project
+details. For source builds, include `npm run doctor` and `npm run smoke` output.
 
-**Your `soundbase` block from `package.json`**
+**Recovery**
 
-```json
-```
-
-That block records which template release you started from and which contract
-version it targets. Without it we are guessing.
+Can the analyzer acquire again after closing SoundBase and reconnecting USB?

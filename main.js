@@ -1,11 +1,9 @@
 import { SoundBasePlugin, runPlugin } from '@soundbase/plugin-shell';
 import * as adapter from './adapter.js';
 
-// The shell bootstrap. Byte-identical across every plugin: it wires whichever
-// module factories adapter.js exports and nothing else, so a plugin that only
-// serves spectrum analyzers, or only monitored devices, uses this same file.
+// Connect the SoundBase shell to the device adapter and worker lifecycle.
 class Plugin extends SoundBasePlugin {
-  // Documented lifecycle-hook exception: native prerequisites are plugin-wide.
+  // Prerequisite diagnostics and worker cleanup are plugin-wide.
   async init(config) { adapter.init?.(this, config); }
   async configUpdated(config) { adapter.configUpdated?.(this, config); }
   async destroy() { await adapter.destroy?.(); }

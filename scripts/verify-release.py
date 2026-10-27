@@ -67,7 +67,7 @@ def verify_archive(path, extract=None):
             raise ValueError('Expected exactly one rsa306b/ package folder')
         payload = {name.removeprefix('rsa306b/'): archive.read(name) for name in names}
         required = ['soundbase-plugin.json', 'package.json', 'package-lock.json', 'main.js', 'adapter.js',
-                    'LICENSE', 'LICENSE-TEMPLATE', 'THIRD-PARTY-NOTICES.md', 'SHA256SUMS',
+                    'LICENSE', 'LICENSE-SOUNDBASE', 'THIRD-PARTY-NOTICES.md', 'SHA256SUMS',
                     'runtime/darwin-arm64/runtime.json', 'runtime/win32-x64/runtime.json',
                     'runtime/darwin-arm64/rsa306', 'runtime/darwin-arm64/libusb-1.0.0.dylib',
                     'runtime/darwin-arm64/sources/libusb-1.0.30.tar.bz2',

@@ -68,10 +68,9 @@ try {
   // Only public plugin code, recipient documentation, notices, and rebuildable
   // native source travel. Private captures and vendor binaries have no input path.
   for (const name of ['main.js', 'adapter.js', 'soundbase-plugin.json', 'package-lock.json',
-    'README.md', 'LICENSE', 'LICENSE-TEMPLATE', 'UPSTREAM.md']) copy(join(ROOT, name), join(stage, name));
+    'README.md', 'LICENSE', 'LICENSE-SOUNDBASE']) copy(join(ROOT, name), join(stage, name));
   copyTree(join(ROOT, 'driver'), join(stage, 'driver'), rel => /\.(js|py|json)$/.test(rel) && !rel.split('/').some(p => ['__tests__', 'tests', '__pycache__'].includes(p)));
-  copy(join(ROOT, 'release/THIRD-PARTY-NOTICES.md'), join(stage, 'THIRD-PARTY-NOTICES.md'));
-  copy(join(ROOT, 'release/README.md'), join(stage, 'RELEASE.md'));
+  copy(join(ROOT, 'THIRD-PARTY-NOTICES.md'), join(stage, 'THIRD-PARTY-NOTICES.md'));
   copy(join(ROOT, 'release/README.md'), join(stage, 'release/README.md'));
   copy(join(ROOT, 'release/runtime-pins.json'), join(stage, 'release/runtime-pins.json'));
   if (existsSync(join(ROOT, 'docs'))) copyTree(join(ROOT, 'docs'), join(stage, 'docs'), rel => rel.endsWith('.md'));

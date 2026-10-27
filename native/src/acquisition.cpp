@@ -112,7 +112,7 @@ struct Session::Impl {
     }
     void initialize() {
         check_cancel();
-        // Volatile HW7 power and RF-path enables, named in docs/USBProtocol.md.
+        // Volatile HW7 power and RF-path enables.
         write({{0x8012,1},{0x8035,0x10},{0x4030,1},{0x8030,0x10},{0x8030,0x40},
                {0x4033,7},{0x8033,1},{0x8034,1},{0x8034,2},{0x8034,8},
                {0x8035,2},{0x8035,1},{0x8035,4},{0x8015,4},{0x8015,2},{0x8015,1}});

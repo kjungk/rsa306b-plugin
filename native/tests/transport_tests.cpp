@@ -22,7 +22,7 @@ std::vector<std::uint8_t> hex(std::string_view text) {
 }
 void abi_packets() {
     namespace abi=rsa::usb::cypress;
-    // Independently encoded packet from the successful read-only TPX1 probe:
+    // Fixed Cypress driver packet layout:
     // USB GET_DESCRIPTOR(device,18), 5-second timeout, packed 38-byte header.
     const auto expected=hex("8006000100001200050000000000000000000000000000000000000000002600000012000000");
     const auto request=abi::control_header(0x80,6,0x0100,0,18,5000);
@@ -44,7 +44,7 @@ void abi_packets() {
 }
 void descriptors() {
     namespace abi=rsa::usb::cypress;
-    // Unmodified USB configuration bytes captured by the read-only TPX1 probe
+    // RSA306B USB configuration descriptor regression vector
     // on 2026-10-26. This is public device topology, not stored calibration.
     const auto bytes=hex("0902390001010080320904000003ff0000000705840200040006300f0000000705030300040106300200000c0705830300040106300200000c");
     rsa::Device device{0x0699,0xa306,0x0300,0,1,5000,abi::parse_configuration(bytes)};

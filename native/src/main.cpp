@@ -145,7 +145,7 @@ void discover() {
     if(mock_mode){std::cout<<"{\"schema_version\":1,\"type\":\"discovery\",\"synthetic\":true,\"devices\":[{\"vendor_id\":1689,\"product_id\":41734,\"bus\":0,\"address\":1,\"speed_mbps\":5000}]}\n";return;}
     const auto devices = rsa::discover();
     std::cout << "{\"schema_version\":1,\"type\":\"discovery\",\"native_acquisition\":true,"
-                 "\"reason\":\"Prototype backend implemented; see docs/rsa306b-validation.md for hardware evidence\",\"devices\":[";
+                 "\"reason\":\"Native USB backend; one supported RSA306B required\",\"devices\":[";
     bool first = true;
     for (const auto& d : devices) {
         if (!first) std::cout << ',';
