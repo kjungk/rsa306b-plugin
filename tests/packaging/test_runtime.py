@@ -1,7 +1,11 @@
 """Inspect imports from PE bytes without needing a Windows execution host."""
 import importlib.util
+import json
+import os
 from pathlib import Path
 import struct
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -11,6 +15,26 @@ spec.loader.exec_module(common)
 build_spec = importlib.util.spec_from_file_location('windows_build', Path(__file__).resolve().parents[2] / 'scripts/build-native-windows.py')
 windows_build = importlib.util.module_from_spec(build_spec)
 build_spec.loader.exec_module(windows_build)
+
+
+class WorkerMetadataEncodingTests(unittest.TestCase):
+    def test_utf8_worker_json_ignores_legacy_windows_code_page(self):
+        # Use an actual subprocess emitting UTF-8 bytes. The outer interpreter
+        # disables UTF-8 mode and simulates Windows' legacy locale default, so
+        # removing the explicit decoder reproduces the observed mojibake.
+        program = f'''
+import importlib.util, json, locale, subprocess, sys
+spec = importlib.util.spec_from_file_location('builder', {str(Path(windows_build.__file__))!r})
+builder = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(builder)
+locale.getencoding = lambda: 'cp1252'
+payload = json.dumps({{'limitation': '9 kHz\\u20136.2 GHz'}}, ensure_ascii=False).encode('utf-8')
+command = [sys.executable, '-c', 'import sys; sys.stdout.buffer.write(' + repr(payload) + ')']
+print(json.dumps(builder.read_json_output(command)))
+'''
+        result = subprocess.check_output([sys.executable, '-c', program],
+                                         env={**os.environ, 'PYTHONUTF8': '0'}, encoding='utf-8')
+        self.assertEqual(json.loads(result)['limitation'], '9 kHz–6.2 GHz')
 
 
 class VisualStudioSelectionTests(unittest.TestCase):

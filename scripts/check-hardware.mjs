@@ -26,6 +26,8 @@ if(!Number.isFinite(seconds)||seconds<1||seconds>86400||!Number.isFinite(maxSeco
 if(mode==='soak' && maxSeconds<=seconds)throw new Error('--max-seconds must exceed the requested soak duration');
 const root=resolve(folder),output=resolve(reportFile),archive=values.archive;
 const modeGate={acquisition:'acquisition range and retune suite',controls:'native gain/RBW/trace-mode controls',lifecycle:'stop/start and competing-owner lifecycle',disconnect:'physical unplug/reconnect',soak:'30-minute soak'};
+const competingAlias='acceptance-competing-owner';
+const competingMessage='The RSA306B is already open in this plugin. Close its other live scan first.';
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 writeFileSync(output, '', { flag: 'wx' });
 const report = {
@@ -41,7 +43,16 @@ const report = {
   stages: [], warning_events: {}, failed_device_events: [],
   pending: [...Object.values(modeGate),'Desktop plot/waterfall and project reload check','normal Desktop exit and enable/disable check','targeted final-package RF confirmation (existing SMHU evidence separately replayed)','controlled hard-host-crash recovery'],
 };
-const persist = () => { const temp = `${output}.tmp`; writeFileSync(temp, `${JSON.stringify(report,(key,value)=>key==='previous_amplitudes'?undefined:value,2)}\n`); renameSync(temp,output); };
+function classifyFailedEvents() {
+  const rejected=mode==='lifecycle'&&report.stages.some(stage=>stage.name==='competing-owner-rejected'&&stage.status==='passed'&&
+    stage.response?.status===503&&stage.response?.body?.detail===competingMessage);
+  for(const event of report.failed_device_events) {
+    event.expected=Boolean(rejected&&event.id===competingAlias&&event.status?.message===competingMessage);
+    event.classification=event.expected?'expected-competing-owner-rejection':mode==='disconnect'?'manual-disconnect-review-required':'unexpected-device-failure';
+  }
+  return report.failed_device_events.filter(event=>!event.expected);
+}
+const persist = () => { classifyFailedEvents();const temp = `${output}.tmp`; writeFileSync(temp, `${JSON.stringify(report,(key,value)=>key==='previous_amplitudes'?undefined:value,2)}\n`); renameSync(temp,output); };
 persist();
 const token = randomBytes(24).toString('hex');
 const env = {...process.env, SB_PLUGIN_TOKEN: token};
@@ -247,7 +258,7 @@ try {
   } else {
     await stage('initial-open',base,2);
     // An alias with the same explicit serial exercises the in-plugin exclusive-owner guard.
-    const alias='acceptance-competing-owner';aliasPath=`/devices/${encodeURIComponent(alias)}`;
+    const alias=competingAlias;aliasPath=`/devices/${encodeURIComponent(alias)}`;
     await api('/devices','POST',{id:alias,product:device.product,config:{serial:device.id.slice('usb:rsa306b:'.length)}});
     const competing=await api(aliasPath+'/configuration','POST',base,{allowError:true});
     assert.equal(competing.status,503);assert.match(JSON.stringify(competing.body),/already open/i);
@@ -270,7 +281,7 @@ try {
   await api(devicePath+'/sweep/stop','POST');
   report.final_devices=(await api('/devices')).devices;
   await api(devicePath,'DELETE');devicePath=null;
-  if(mode!=='disconnect')assert.equal(report.failed_device_events.length,0,'Unexpected failed device status occurred');
+  if(mode!=='disconnect')assert.equal(classifyFailedEvents().length,0,'Unexpected failed device status occurred');
   if(mode!=='soak'||seconds>=1800)report.pending=report.pending.filter(value=>value!==modeGate[mode]);
   report.automated_status='passed';
 } catch(error) {
@@ -281,6 +292,10 @@ try {
   if(aliasPath&&port)try{await api(aliasPath,'DELETE',undefined,{cleanup:true,timeoutMs:40000});}catch(error){report.alias_cleanup_error=error.message;}
   if(devicePath&&port)try{await api(devicePath,'DELETE',undefined,{cleanup:true,timeoutMs:40000});}catch(error){report.cleanup_error=error.message;}
   eventsAbort.abort();await eventTask;
+  if(mode!=='disconnect'&&classifyFailedEvents().length) {
+    report.status='failed';report.automated_status='failed';
+    report.error??='Unexpected failed device status occurred';process.exitCode=1;
+  }
   if(!exited && process.platform==='win32') {
     // Windows does not deliver SIGTERM to Node as a graceful signal. Device
     // DELETE above first waits for worker cleanup; terminate the remaining shell

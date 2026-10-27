@@ -2,6 +2,7 @@
 
 This is the historical 26 October record. For later evidence, see the
 [Mac CI-package results](macos-validation-2026-10-26.md),
+[Mac transport regression](macos-native-regression-2026-10-27.md),
 [completed generator measurements and numerical replay](rf-validation-2026-10-27.md),
 and [native Windows tests](windows-native-validation-2026-10-27.md).
 The local candidate and Windows API results below refer to an earlier ZIP.
@@ -82,8 +83,14 @@ The Mac CI-package acquisition, disconnect/reconnect, Desktop rendering and
 completed on 27 October; their numerical bridge and limits are recorded in the
 linked RF report. Those tasks must no longer be described as unperformed.
 
-The native Windows backend and new shared transport require their own acceptance.
-A new committed-source CI candidate still needs qualification tied to its exact
-ZIP, followed by Lab screenshot, submission, approval and installation checks.
+The native Windows backend passed development acquisition, controls, lifecycle,
+physical disconnect/reconnect and a 30-minute soak on TPX1. A separate clean CI
+ZIP passed Windows acquisition, controls and lifecycle checks, followed by
+successful official-API acquisition and user-confirmed live SignalVu handoff.
+The same CI ZIP passed a 54-trace Mac transport regression. See the linked
+reports for artifact identities and the remaining final-package endurance,
+disconnect, Desktop and clean-PC qualification checks.
+Final release qualification must still be tied to the exact ZIP, followed by Lab
+screenshot, submission, approval and installation checks.
 `release/qualification.json` remains pending; this historical Windows API subset
 cannot qualify the newer native worker.

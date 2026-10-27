@@ -27,6 +27,11 @@ def run(args):
     subprocess.run(list(map(str, args)), check=True)
 
 
+def read_json_output(command):
+    # Worker JSON is UTF-8 regardless of the Windows host's ANSI code page.
+    return json.loads(subprocess.check_output(list(map(str, command)), encoding='utf-8'))
+
+
 def select_visual_studio(instances, generators, requested=None):
     """Match installed C++ toolsets to generators this CMake actually supports."""
     supported = {}
@@ -103,7 +108,7 @@ def main():
     worker = work / 'Release/rsa306.exe'
     if common.pe_arch(worker) != 0x8664:
         raise ValueError('Build did not produce an x64 worker')
-    caps = json.loads(subprocess.check_output([str(worker), 'capabilities'], text=True))
+    caps = read_json_output([worker, 'capabilities'])
     caps.pop('lock_path', None)
     metadata = work / 'native-runtime-metadata.json'
     metadata.write_text(json.dumps({

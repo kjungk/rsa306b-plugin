@@ -39,6 +39,12 @@ versions to CMake's advertised generators, and selects the newest compatible
 instance. It does not assume that a runner image name implies a particular
 Visual Studio release.
 
+Worker JSON is decoded explicitly as UTF-8 when generating Windows runtime
+metadata. An earlier builder used the host code page and could garble the
+human-readable capability limitation in `runtime.json`; the native worker bytes
+and JSON protocol were already UTF-8. Correcting this metadata produces a new
+package digest, so retain earlier acceptance evidence against its original ZIP.
+
 For a separately built Windows worker, including a development cross-build,
 `scripts/assemble-runtime.py --native-worker PATH --python-zip PATH` assembles
 the worker and fallback Python without executing them. Such assembly does not
