@@ -2,25 +2,26 @@
   "schema_version": 1,
   "plugin_id": "rsa306b",
   "version": "1.0.0",
-  "artifact_sha256": "b2f82851abb82394923fd042eb86ae968de7f9df8642b2eadb22023bc286826b",
-  "source_commit": "763c8f68fcf8b22edff0864a7ac822a6d4fd1eb9",
+  "artifact_sha256": "a3411a86c5c4cd941b2662d953a15cf442a7b71e492bc9129c509de754ee7555",
+  "source_commit": "2d6615809502646bcd10c83b68f6c937af2024a3",
   "release_channel": "stable",
-  "ci_run_id": 40535746568,
+  "ci_run_id": 40693701041,
+  "release_revision": "simplified settings replacement",
   "checks": {
     "macos_hardware": {
       "status": "passed",
       "report": "reports/macos.json",
-      "sha256": "c7a7c7cc341f071a54bbb7edfb45fad84507ea85edb4a9126fb6d40261c5573e"
+      "sha256": "6fddd83bd1f160b332f8bb25275395a6b0dc8378e174a5fa0efccbf9225b4bf0"
     },
     "windows_hardware": {
       "status": "passed",
       "report": "reports/windows.json",
-      "sha256": "8e500b629e5773eccea37867bdb43393f04288f6d0a8e483b80043caee23950b"
+      "sha256": "c01ded030fe1ce02ad942992c786f43719b53209b6d420669985db59b582ba2d"
     },
     "signal_generator": {
       "status": "passed",
       "report": "reports/signal-generator.json",
-      "sha256": "4b0ff5bcbc66ed0790b4bf9a717635ab9d924f3303a9f87c70b699bd42a07c97"
+      "sha256": "cc25bc806cbfe37b01b811af71d787fdb754fe7716de12927a9b8254fcffa0b5"
     }
   }
 }

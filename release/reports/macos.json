@@ -2,34 +2,35 @@
   "schema_version": 1,
   "plugin_id": "rsa306b",
   "version": "1.0.0",
-  "artifact_sha256": "b2f82851abb82394923fd042eb86ae968de7f9df8642b2eadb22023bc286826b",
-  "source_commit": "763c8f68fcf8b22edff0864a7ac822a6d4fd1eb9",
+  "artifact_sha256": "a3411a86c5c4cd941b2662d953a15cf442a7b71e492bc9129c509de754ee7555",
+  "source_commit": "2d6615809502646bcd10c83b68f6c937af2024a3",
   "release_channel": "stable",
-  "ci_run_id": 40535746568,
+  "ci_run_id": 40693701041,
   "status": "passed",
+  "release_revision": "simplified settings replacement",
   "scope": "macOS arm64 release acceptance",
-  "basis": "unchanged implementation with carried-forward validation",
+  "basis": "targeted settings regression with reviewed carry-forward of unchanged acquisition validation",
   "previous_qualification": {
-    "version": "0.1.0",
-    "artifact_sha256": "8c6cc6403b6f13e1af82ecc0a9c66ce647eb25c6b771247041d0f3731c3ffc83",
-    "source_commit": "bc2888395e451c37c233251b16baeefe87bc55e2",
-    "report": "https://github.com/kjungk/rsa306b-plugin/releases/download/v0.1.0/macos.json",
-    "report_sha256": "b810b5d315349c8be7db0dfa182c080787f93fee796cc675456486ca4912fa28"
+    "version": "1.0.0 (original package)",
+    "artifact_sha256": "b2f82851abb82394923fd042eb86ae968de7f9df8642b2eadb22023bc286826b",
+    "source_commit": "763c8f68fcf8b22edff0864a7ac822a6d4fd1eb9",
+    "report": "https://github.com/kjungk/rsa306b-plugin/blob/462aca9836aec7ad6b2400551959ad3517a3a4e0/release/reports/macos.json",
+    "report_sha256": "c7a7c7cc341f071a54bbb7edfb45fad84507ea85edb4a9126fb6d40261c5573e"
   },
   "source_review": {
     "status": "passed",
-    "summary": "Only version metadata, documentation, release qualification and publication channel changed; acquisition code, native build recipes, dependencies and CI remain unchanged.",
+    "summary": "Changes remove public runtime/API path overrides, ignore obsolete saved paths, show serial entry only for manual devices, improve setup documentation and add guarded release replacement. Native acquisition/calibration/FFT, API acquisition/configuration, process supervision, dependency versions, runtime build recipes and CI are unchanged. The only Python worker change is the missing-API guidance message.",
     "native_source_tree": "daefe5d6470368868d3eb4f009a74d5603bf98ec",
-    "driver_source_tree": "820ed6eb90d6324c15bf5ff7ef24f0b9499cb230",
-    "normalized_dependency_lock_sha256": "3c4efc8c1af6ead7fdf49a2e61cf700f8905e5b88006b4f0e1620678142b4fd9"
+    "dependency_lock_sha256": "d0e9c7543cb1d938566c3c386fa6c7d237d135134188fbb6a9bc5fae9d1026ba"
   },
   "candidate_checks": {
     "archive_verification": "passed",
-    "ci": "https://github.com/kjungk/rsa306b-plugin/actions/runs/40535746568",
+    "ci": "https://github.com/kjungk/rsa306b-plugin/actions/runs/40693701041",
     "ci_jobs_passed": 11,
-    "packaged_target_workers": "macOS arm64 and Windows x64 real workers passed mock acquisition from the extracted ZIP",
-    "package_comparison": "954 of 966 package files are byte-identical to v0.1.0. Changes are version metadata, documentation, rebuilt native binaries and corresponding manifests/checksums. Executable instruction sections in both workers and bundled libusb are byte-identical; source, dependency and build provenance review passed."
+    "packaged_target_workers": "Both target runtimes passed extracted-package mock acquisition; Windows covers native and API workers.",
+    "package_comparison": "952 of 966 files are byte-identical to the original 1.0.0 package. Changes are settings routing, manifest fields, missing-API guidance, documentation, package metadata and rebuilt native binaries/manifests. Executable instruction sections in both workers and bundled libusb are byte-identical; acquisition source, dependencies and build recipes are unchanged.",
+    "local_packaged_runtime": "This exact ZIP passed clean boot and bundled native-worker mock acquisition on Apple silicon. The settings regression suite also passed locally."
   },
-  "acceptance": "The completed acquisition, controls, lifecycle, Desktop, disconnect/reconnect and endurance checks remain applicable to the unchanged implementation. Fresh CI build and extracted-package checks passed. No new physical acquisition or Desktop interaction is claimed for the 1.0.0 ZIP.",
+  "acceptance": "Completed physical acquisition, controls, lifecycle, Desktop, disconnect/reconnect and endurance checks carry forward after source and executable-code comparison. Native worker selection is now automatic; obsolete saved path settings are covered by regression tests. No new physical Mac acquisition is claimed for this replacement ZIP.",
   "installation_scope": "Apple silicon on macOS 14 or later."
 }
