@@ -4,7 +4,7 @@ A SoundBase Desktop plugin for the Tektronix RSA306B spectrum analyzer on
 **Apple silicon Macs and Windows x64**. It provides live spectrum traces over
 9 kHz–6.2 GHz, using SoundBase's scan controls, plot and waterfall.
 
-**1.0.0:** Apple silicon and Windows x64. The plugin is published on
+**Version 1.0.0:** Apple silicon and Windows x64. The plugin is published on
 [SoundBase Lab](https://lab.soundbase.app). Check the version listed there;
 [GitHub Releases](https://github.com/kjungk/rsa306b-plugin/releases) may have a
 newer package.
@@ -22,11 +22,20 @@ Intel Macs, Windows arm64, Linux hardware operation and multiple connected
 analyzers are not supported. A complete plugin package needs no separate Node,
 Python, Homebrew or compiler installation. SoundBase supplies Node.
 
-The Windows **Native USB** backend uses the existing Tektronix driver without
-`RSA_API.dll`. Keep a working SignalVu driver; do not replace it with WinUSB or
-Zadig. SignalVu can remain installed, but must be closed during plugin acquisition.
-The optional **Tektronix API** backend additionally requires the installed x64
-RSA API and uses Python bundled with the plugin.
+**Mac:** install the complete plugin package and connect the analyzer. Its
+acquisition software is bundled and selected automatically.
+
+**Windows:** install the **Tektronix RSA USB driver**, supplied with SignalVu-PC
+or the Tektronix RSA API installer. If SignalVu already works, keep its driver
+and close SignalVu before scanning. Do not replace the driver with WinUSB or
+Zadig. Keep the only plugin setting, **Windows acquisition backend**, on
+**Native USB (default)**. macOS ignores this Windows-only setting.
+
+There are no path settings. Native USB does not require `RSA_API.dll` or
+SignalVu-PC itself. The optional **Tektronix API**
+backend uses the separately installed x64 API library and the plugin's bundled
+Python runtime; it still requires the same USB driver. The API library is found
+automatically in standard Tektronix installation locations.
 
 ## Use the plugin
 

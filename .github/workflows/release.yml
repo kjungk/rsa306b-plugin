@@ -17,6 +17,10 @@ on:
         description: 'Mark this release as a beta instead of stable'
         type: boolean
         default: false
+      replace_source:
+        description: 'Only to replace an existing release: its current 40-character source commit'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -62,6 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PRERELEASE: ${{ inputs.prerelease }}
+          REPLACE_SOURCE: ${{ inputs.replace_source }}
         shell: bash
         run: |
           set -euo pipefail
@@ -70,10 +75,30 @@ jobs:
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
           [[ "$SOURCE" =~ ^[a-f0-9]{40}$ ]]
           TAG="v$VERSION"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; refusing to replace it"
-            exit 1
+          TITLE="Tektronix RSA306B $VERSION"
+          RELEASE_FLAGS=(--latest --prerelease=false)
+          if [[ "$PRERELEASE" = true ]]; then
+            TITLE="$TITLE beta"
+            RELEASE_FLAGS=(--prerelease --latest=false)
           fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            [[ "$REPLACE_SOURCE" =~ ^[a-f0-9]{40}$ ]] || { echo 'Existing release requires its explicit previous source commit'; exit 1; }
+            gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > previous-release.json
+            test "$(jq -r .immutable previous-release.json)" = false
+            OLD_TAG=$(git ls-remote --tags origin "refs/tags/$TAG" | cut -f1)
+            test "$OLD_TAG" = "$REPLACE_SOURCE"
+            # The candidate and qualification gates above also apply to a
+            # replacement. A lease prevents moving a tag changed by someone else.
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir previous-assets
+            git fetch --no-tags --depth=1 origin "$SOURCE"
+            git push --force-with-lease="refs/tags/$TAG:$REPLACE_SOURCE" origin "$SOURCE:refs/tags/$TAG"
+            gh release upload "$TAG" "dist/rsa306b-$VERSION.zip" "dist/rsa306b-$VERSION.zip.sha256" \
+              release/qualification.json release/reports/*.json --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" "${RELEASE_FLAGS[@]}" \
+              --target "$SOURCE" --title "$TITLE" --notes-file release/NOTES.md
+            exit 0
+          fi
+          test -z "$REPLACE_SOURCE"
           # --target does not move an existing tag. Refuse one rather than
           # accidentally associating qualified bytes with a different commit.
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG"; then
@@ -82,13 +107,16 @@ jobs:
           else
             test "$?" = 2
           fi
-          TITLE="Tektronix RSA306B $VERSION"
-          RELEASE_FLAGS=(--latest)
-          if [[ "$PRERELEASE" = true ]]; then
-            TITLE="$TITLE beta"
-            RELEASE_FLAGS=(--prerelease)
-          fi
           gh release create "$TAG" "dist/rsa306b-$VERSION.zip" "dist/rsa306b-$VERSION.zip.sha256" \
             release/qualification.json release/reports/*.json \
             --repo "$GITHUB_REPOSITORY" --target "$SOURCE" \
             "${RELEASE_FLAGS[@]}" --title "$TITLE" --notes-file release/NOTES.md
+      - name: Preserve the previous release when replacing it
+        if: ${{ always() && inputs.replace_source != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: previous-release
+          path: |
+            previous-release.json
+            previous-assets/*
+          if-no-files-found: ignore

@@ -190,7 +190,7 @@ def locate_api(explicit=None):
             dirs = [path.parent]
             if path.parent.name == 'DigitizerSourceFactories': dirs.append(path.parents[2])
             return path, list(dict.fromkeys(dirs))
-    raise RuntimeError('Install the official 64-bit Tektronix RSA API and USB driver, then set Windows API path in SoundBase plugin settings to RSA_API.dll.')
+    raise RuntimeError('Tektronix RSA API was not found. Install or repair the official 64-bit RSA API and USB driver using the standard installation location; the plugin detects the API automatically.')
 
 
 @contextmanager

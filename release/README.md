@@ -116,8 +116,17 @@ python3 scripts/verify-release.py dist/candidate-01/rsa306b-1.0.0.zip \
 Manually run **Release** with `publish: true` and the successful candidate's
 `candidate_run_id`. It verifies qualification and publishes the existing bytes
 as a stable release with the user-facing notes and qualification summaries,
-without rebuilding or replacing an existing release. Set `prerelease: true`
+without rebuilding. It refuses existing releases by default. Set `prerelease: true`
 only for a beta release. With `publish: false`, it only rehearses the build.
+
+Replacing a published version is an explicit maintainer operation. Leave
+`replace_source` empty for normal releases. To replace an existing release,
+enter its current full source commit; the workflow requires a mutable release,
+an exactly matching tag and a newly qualified candidate. It updates the tag
+using a lease, replaces the download assets and notes, and retains the previous
+assets as a workflow artifact. Users must reinstall a replaced same-version ZIP;
+the version number alone will not distinguish the two packages.
+
 The plugin is already listed on SoundBase Lab. Submit a version update there
 separately when requested, obtain approval and verify installation on both
 targets with `SB_PLUGIN_DIRS` unset.

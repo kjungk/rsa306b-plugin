@@ -5,11 +5,21 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createIO, runtime } from '../driver/windows/worker.js';
 import { RSAAdapter, createDiscovery } from '../driver/windows/adapter.js';
+import { createSpectrumAnalyzerAdapter, destroy } from '../adapter.js';
 const script=fileURLToPath(new URL('../driver/windows/worker.py',import.meta.url));
 const python=process.env.SB_RSA306B_TEST_PYTHON || (process.platform==='win32'?(existsSync(runtime)?runtime:'python'):'python3');
 const available=spawnSync(python,['--version'],{windowsHide:true}).status===0;
 const skip=available?false:'Python absent; real Windows worker mock MUST run in the Windows artifact job.';
 const io=createIO({pythonPath:python},{nativeMock:true});
+test('saved path overrides do not prevent opening the bundled Windows API worker', {
+ skip: process.platform!=='win32'||!existsSync(runtime)?'Bundled Windows Python required.':false,
+},async()=>{
+ process.env.SB_RSA306B_NATIVE_MOCK='1';
+ const a=createSpectrumAnalyzerAdapter({config:{serial:'MOCK-RSA306B'}},{windowsBackend:'tektronix-api',pythonPath:'obsolete-python',windowsApiPath:'obsolete.dll'});
+ try {
+  const info=await a.open();assert.equal(info.identity.serial,'MOCK-RSA306B');
+ }finally{await a.close();await destroy();delete process.env.SB_RSA306B_NATIVE_MOCK;}
+});
 test('real Python mock uses explicit serial, ctypes API configuration and finite complete dBm sweeps',{skip,timeout:20000},async()=>{
   const found=await createDiscovery(io)();assert.equal(found[0].id,'usb:rsa306b:MOCK-RSA306B');
   await assert.rejects(io.query(['probe','--serial','OTHER']),/differs/);

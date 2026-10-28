@@ -1,6 +1,6 @@
 # Tektronix RSA306B plugin user manual
 
-For plugin version **1.0.0** · Updated **27 October 2026**
+For version **1.0.0** · Updated **28 October 2026**
 
 The Tektronix RSA306B plugin brings live spectrum measurements into SoundBase
 Desktop. Select your analyzer in a Coord project's live-scan settings, choose
@@ -33,7 +33,7 @@ analyzer's factory calibration.
 | Computer | Apple silicon Mac, macOS 14 or later | Windows x64 on an Intel or AMD processor |
 | SoundBase | SoundBase Desktop for Apple silicon with plugin support | SoundBase Desktop for Windows x64 with plugin support |
 | Analyzer | RSA306B hardware revision 7, firmware 1.7, FPGA 2.1 | Native: the same HW7 / 1.7 / 2.1 combination; API fallback: RSA306B supported by the installed API |
-| Acquisition software | Included in the complete plugin package | Native worker included; compatible Tektronix RSA USB driver installed separately. API fallback additionally needs the x64 RSA API. |
+| Acquisition software | Included in the complete plugin package | Included in the complete plugin package; install the compatible Tektronix RSA USB driver separately. |
 | USB connection | USB 3 SuperSpeed | USB 3 SuperSpeed for Native USB |
 
 Use one connected RSA306B and one live scan at a time. Intel Macs, Windows arm64,
@@ -65,28 +65,32 @@ starting the scan. Intel Macs are not supported.
 
 ### Windows preparation
 
-1. Install the compatible **Tektronix RSA USB driver** using the official
-   [Tektronix installer](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer).
-   SignalVu-PC also supplies this driver. If SignalVu already works with the
-   analyzer, keep that driver. Do not replace it with WinUSB or use Zadig.
-   The compatible driver is `RSA3USB3.sys` version 1.2.3.20.
-2. Connect the RSA306B and allow driver installation to finish. If you use
-   SignalVu-PC to check the connection, close it completely afterwards.
-3. Leave **Windows acquisition backend** at **Native USB (default)**. This
-   backend uses the bundled worker and does not load `RSA_API.dll` or Python.
-   The Tektronix API path can stay empty.
+1. Install the **Tektronix RSA USB driver** on the Windows computer connected
+   to the analyzer. If SignalVu-PC already works with the RSA306B, the driver
+   is already installed; keep it and close SignalVu-PC. Without SignalVu-PC,
+   install Tektronix's **RSA API/USB-driver package** to obtain the driver.
+   Tektronix documents both options in its
+   [USB-driver FAQ](https://www.tek.com/en/support/faqs/where-do-i-get-usb-driver-rsa306);
+   software is available from the
+   [RSA306B downloads page](https://www.tek.com/en/support/datasheets-manuals-software-downloads?series=RSA306B+USB+Spectrum+Analyzer).
+   The tested driver is `RSA3USB3.sys` version 1.2.3.20. Do not replace it with
+   WinUSB or use Zadig.
+2. Connect the RSA306B and allow driver installation to finish.
+3. Keep **Windows acquisition backend** on **Native USB (default)**.
 
-The complete ZIP includes the Windows worker and Python for the optional API
-fallback. The USB driver is a separate, one-time prerequisite: this is not a
-driver-free Windows installer. Keep a working SignalVu installation; you do not
-need to uninstall it or start SignalVu before using Native USB. Follow
-[the handoff steps](#use-signalvu-on-the-same-windows-computer) when switching
-applications.
+The plugin automatically uses its bundled acquisition software. No worker path,
+Python installation or interpreter path is needed. The USB driver is the Windows
+system component that lets this software communicate with the analyzer; it is
+required on every Windows computer, not just a particular test machine.
 
-To use the optional **Tektronix API (fallback)** backend, install the 64-bit RSA
-API as well, then follow [the backend-switching steps](#switch-the-windows-backend).
-The fallback searches standard RSA API and SignalVu installation locations; an
-explicit API path is needed only when automatic lookup fails.
+Installing the RSA API package to obtain the driver does **not** require
+switching to the API backend. Native USB uses the driver directly and does not
+load `RSA_API.dll`. SignalVu-PC does not need to be installed or running.
+
+**Tektronix API (fallback)** is an optional alternative for compatibility or
+troubleshooting. Only that backend needs the x64 RSA API library as well as the
+USB driver. Its Python runtime is included and selected automatically. See
+[Switch the Windows backend](#switch-the-windows-backend) if you need it.
 
 ### Installation through Lab
 
@@ -117,8 +121,8 @@ to make the package run.
    **Open Live Scan Data Settings**.
 4. In **Select a device**, choose **Tektronix RSA306B** followed by your unit's
    serial number. Match it to your instrument. Selecting a discovered device
-   supplies its identity; you do not need to type its serial into the optional
-   **Analyzer serial number** field.
+   supplies its identity automatically. The **Analyzer serial number** field
+   appears only when adding a device manually.
 5. Choose a frequency range appropriate for the antenna and signals you want to
    observe. For a first UHF scan, **470–694 MHz**, **Auto RBW** and **1001 points**
    are a useful example. Check the unit shown beside each frequency field.
@@ -223,36 +227,36 @@ complete measurement setup before relying on an absolute level.
 
 ## Plugin and device settings
 
-Open **Settings → Plugins → Tektronix RSA306B** for installation settings.
-These settings describe software on the local computer; they are separate from
-the scan frequency and device controls.
+For normal use, **keep the defaults**. The plugin selects its bundled worker
+for your operating system automatically. No executable or Python paths need
+to be configured.
 
-| Setting | Normal use |
-| --- | --- |
-| Windows acquisition backend | Native USB is the default and needs only the compatible USB driver. Tektronix API is an explicit fallback. Close live scans before switching. |
-| Tektronix API path (Windows fallback) | Leave empty for automatic lookup. Used only by the API fallback; optionally enter the full path to `RSA_API.dll` or its directory. |
-| Native worker path (advanced) | Leave empty to use the bundled acquisition worker. Change only when the maintainer supplies a compatible replacement for your OS and architecture. |
-| Python interpreter (advanced, Windows fallback) | Leave empty to use the bundled interpreter. This setting is unused by Native USB. |
+Open **Settings → Plugins → Tektronix RSA306B** for the single installation
+setting: **Windows acquisition backend**. macOS ignores this setting and always
+uses its bundled native worker. Scan frequencies and gain controls are
+configured separately in the live-scan dialog.
 
-For example, if this file exists on your computer, the Windows API path may be
-`C:\Tektronix\RSA_API\lib\x64\RSA_API.dll` or
-`C:\Tektronix\RSA_API\lib\x64`. Enter the path as plain text, without quotation
-marks. All overrides must be full absolute paths. Keep the vendor installation
-intact so its dependencies remain available.
+- **Native USB (default):** use this for normal operation. On Windows it needs
+  the Tektronix RSA USB driver, supplied with SignalVu-PC or the RSA API installer.
+  It does not load the Tektronix API library.
+- **Tektronix API (fallback):** an optional alternative that uses the installed
+  x64 RSA API library and the same USB driver. The plugin finds the API in its
+  standard installation locations and uses its bundled Python interpreter.
 
-**Analyzer serial number** is an optional explicit device setting. The selected
-discovered device already identifies its serial, even if Desktop leaves this
-field blank. Selecting a different physical unit requires selecting its serial
-in the device picker.
-The plugin checks the serial when connecting and will not silently substitute
-another unit.
+There are no worker, Python or API path fields. Install Tektronix software using
+its standard location so the API fallback can find it automatically.
+
+Select your analyzer from the discovered-device list. Its **serial number** is
+supplied automatically; the serial-number input is only shown when adding a
+device manually. The plugin checks the serial when connecting and will not
+silently substitute another unit.
 
 ### Switch the Windows backend
 
 1. Stop **Live** and close the analyzer's live-scan connection.
 2. In the plugin settings, choose **Native USB (default)** or
    **Tektronix API (fallback)**. For the fallback, confirm the x64 API is
-   installed and supply its path only if automatic lookup fails.
+   installed in its standard location; the plugin finds it automatically.
 3. Wait for the plugin's prerequisite check to finish, then select the analyzer
    again in the live-scan settings.
 4. Check the device controls before restarting. Native USB uses **RF attenuation**
@@ -264,7 +268,7 @@ selected backend and its setup or acquisition error remain visible.
 
 ## Use SignalVu on the same Windows computer
 
-Both applications can remain installed and use the existing Tektronix driver
+Both applications can remain installed and use the same Tektronix RSA USB driver
 one at a time. They must not acquire simultaneously: the driver allows multiple
 handles, and the plugin's ownership check cannot prevent SignalVu from accessing
 an active session.
@@ -289,14 +293,14 @@ failure, and runs again after you change plugin settings.
 | Symptom | What to check or do |
 | --- | --- |
 | Plugin does not appear | Use SoundBase Desktop on a supported architecture. Check that the package is installed and enabled. For an evaluation ZIP, check the folder layout and launch instructions below. |
-| Needs setup on Windows | For Native USB, restore the complete package and clear an unintended native-worker override. For the API fallback, check the x64 API installation/path and bundled Python. |
-| Native Windows discovery cannot access USB | Check the existing Tektronix RSA USB driver and close SignalVu or other analyzer software. Keep the vendor driver installed; changing drivers is not part of plugin setup. |
-| Needs setup on Mac | Use the complete arm64 package on macOS 14 or later. Clear an unintended worker-path override and reinstall the complete package if necessary. |
-| Invalid configuration or absolute-path error | Clear unused advanced path fields, or replace a relative path with the full path to the intended file or directory. |
+| Needs setup on Windows | Reinstall the complete plugin package if its bundled runtime is missing. For the API fallback, install or repair the x64 RSA API in its standard location. |
+| Native Windows discovery cannot access USB | Install the compatible Tektronix RSA USB driver through SignalVu-PC or the RSA API installer, and close other analyzer software. Do not replace the Tektronix driver with WinUSB. |
+| Needs setup on Mac | Use the complete arm64 package on macOS 14 or later. Reinstall the complete package if its bundled worker is missing. No path setting is needed. |
+| Tektronix API not found | Install or repair the official x64 RSA API using its standard location. If you intended to use the bundled native worker, select **Native USB (default)** instead. |
 | Plugin is ready but no analyzer is listed | Connect exactly one RSA306B, check USB 3 connectivity, and close competing applications. Discovery can take several seconds to refresh. A ready plugin does not mean a device is attached. |
 | Unsupported device revision with Native USB | Check hardware, firmware and FPGA versions against the requirements above. Other combinations need maintainer support. |
 | Already open, busy or access error | Close the other live-scan connection and SignalVu-PC or other acquisition software. If this followed a crash, use the recovery steps below. |
-| SignalVu no longer connects after a plugin scan | Quit SoundBase normally and confirm its analyzer connection has closed. If a process remains after a crash, follow the recovery sequence. Keep the existing Tektronix driver. |
+| SignalVu no longer connects after a plugin scan | Quit SoundBase normally and confirm its analyzer connection has closed. If a process remains after a crash, follow the recovery sequence. Keep the Tektronix RSA USB driver installed. |
 | Selected analyzer differs or serial mismatch | Choose the connected unit again in the device picker; do not reuse another analyzer's saved serial. |
 | Trace is slow to update | Reduce the span and try Auto or a coarser RBW. Wait for a complete pass and check for withheld-sweep warnings. |
 | Incomplete, quality-flagged or missing-sweep warning | Treat the visible trace as older data. Check USB connectivity, overload and gain/reference settings. If the warning specifically reports unobserved output bins, reduce the point count. |
@@ -330,6 +334,10 @@ identification: check its executable or command-line path. If you cannot identif
 it, restart the computer. Reconnect the analyzer and start Desktop again.
 
 ## Updates and existing projects
+
+The former worker, Python and API path settings have been removed. Previously
+saved values are ignored; bundled runtimes and automatic API detection are used.
+No manual cleanup of old settings is needed.
 
 Stop acquisition before updating or replacing a plugin package. For Lab
 releases, use SoundBase's installation/update flow and verify the resulting

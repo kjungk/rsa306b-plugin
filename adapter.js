@@ -3,7 +3,6 @@ import * as windows from './driver/windows/adapter.js';
 import { createIO as nativeIO, requireCalibration } from './driver/native/worker.js';
 import { createIO as windowsIO, requireApi } from './driver/windows/worker.js';
 import { shutdownWorkers } from './driver/process.js';
-import path from 'node:path';
 
 export const PRODUCT = 'plugin:rsa306b/rsa306b';
 const backends = new Map();
@@ -17,16 +16,12 @@ function backend(config = {}) {
     throw new Error('Windows acquisition backend must be native or tektronix-api.');
   }
   const vendorApi = target === 'win32-x64' && windowsBackend === 'tektronix-api';
-  for (const field of vendorApi ? ['pythonPath', 'windowsApiPath'] : ['nativeWorkerPath']) {
-    const value = config[field];
-    if (value === undefined || value === null || value === '') continue;
-    const absolute = target === 'win32-x64' ? path.win32.isAbsolute : path.posix.isAbsolute;
-    if (typeof value !== 'string' || !absolute(value)) throw new Error(`${field} must be an absolute path.`);
-  }
-  const key = JSON.stringify([target, vendorApi, portableMock, realMock, config.nativeWorkerPath, config.pythonPath, config.windowsApiPath]);
+  const key = JSON.stringify([target, vendorApi, portableMock, realMock]);
   if (backends.has(key)) return backends.get(key);
   const module = vendorApi ? windows : native;
-  const io = vendorApi ? windowsIO(config, { nativeMock: realMock }) : nativeIO(config, { target, portableMock, nativeMock: realMock });
+  // Old saved path settings must not override bundled runtimes or automatic
+  // API discovery after an upgrade.
+  const io = vendorApi ? windowsIO({}, { nativeMock: realMock }) : nativeIO({}, { target, portableMock, nativeMock: realMock });
   const check = vendorApi ? requireApi : requireCalibration;
   const result = { target, vendorApi, module, io, discover: module.createDiscovery(io), diagnose: async signal => check(await io.query(['capabilities'], { signal })) };
   backends.set(key, result); return result;
@@ -77,7 +72,7 @@ function startDiagnostics(plugin, config) {
     } catch (error) {
       if (current === generation) {
         const action = selected.vendorApi
-          ? 'Install the official Tektronix x64 API/USB driver and configure Windows API path. If Python is missing, reinstall the plugin package.'
+          ? 'Install or repair the Tektronix x64 RSA API and USB driver in the standard location. The plugin finds the API automatically. If the bundled runtime is missing, reinstall the complete plugin package.'
           : `Reinstall the complete ${selected.target === 'win32-x64' ? 'Windows x64' : 'macOS arm64'} plugin package, or build its native worker for a development checkout.`;
         plugin.updateStatus('needs-setup', `${action} ${String(error.message).slice(0, 1200)}`);
         retryTimer = setTimeout(check, 30000); retryTimer.unref?.();

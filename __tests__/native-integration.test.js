@@ -4,12 +4,27 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createIO, workerPath } from '../driver/native/worker.js';
 import { RSAAdapter } from '../driver/native/adapter.js';
+import { createSpectrumAnalyzerAdapter, destroy } from '../adapter.js';
 const candidates = [process.env.SB_RSA306B_NATIVE_TEST_WORKER,
   workerPath,
   fileURLToPath(new URL('../native/build/rsa306',import.meta.url))].filter(Boolean);
 const executable = ['darwin-arm64','win32-x64'].includes(`${process.platform}-${process.arch}`) ? candidates.find(existsSync) : undefined;
 const skip = executable ? false : 'Native worker absent; real-worker tests MUST run on both platform artifact jobs.';
 const io = createIO({nativeWorkerPath:executable},{nativeMock:true});
+
+test('saved runtime overrides do not prevent opening the bundled native worker', {
+  skip: !executable || !existsSync(workerPath) ? 'Bundled native runtime required.' : false,
+}, async () => {
+  process.env.SB_RSA306B_NATIVE_MOCK='1';
+  const a=createSpectrumAnalyzerAdapter({config:{serial:'MOCK-RSA306B'}}, {
+    nativeWorkerPath:'obsolete-worker',pythonPath:'obsolete-python',
+  });
+  try {
+    const info=await a.open();assert.equal(info.identity.serial,'MOCK-RSA306B');
+  } finally {
+    await a.close();await destroy();delete process.env.SB_RSA306B_NATIVE_MOCK;
+  }
+});
 
 test('real native planner clamps minimum RBW across the full 9 kHz–6.2 GHz range', {skip}, async () => {
   const a = new RSAAdapter({config:{serial:'MOCK-RSA306B'}},io);

@@ -11,8 +11,8 @@ test('Windows defaults to native gain controls; API fallback is explicit', () =>
   assert.ok(createSpectrumAnalyzerAdapter({}, {windowsBackend:'tektronix-api'}) instanceof VendorAdapter);
   assert.ok(createSpectrumAnalyzerAdapter({}, {windowsBackend:'native'}) instanceof NativeAdapter);
   assert.throws(() => createSpectrumAnalyzerAdapter({}, {windowsBackend:'typo'}), /backend/);
-  assert.throws(() => createSpectrumAnalyzerAdapter({}, {nativeWorkerPath:'relative.exe'}), /absolute path/);
-  assert.throws(() => createSpectrumAnalyzerAdapter({}, {windowsBackend:'tektronix-api',windowsApiPath:'relative.dll'}), /absolute path/);
+  assert.ok(createSpectrumAnalyzerAdapter({}, {nativeWorkerPath:'obsolete.exe',pythonPath:'obsolete-python'}) instanceof NativeAdapter);
+  assert.ok(createSpectrumAnalyzerAdapter({}, {windowsBackend:'tektronix-api',pythonPath:'obsolete-python',windowsApiPath:'obsolete.dll'}) instanceof VendorAdapter);
 });
 test('Mac remains native when a shared project carries Windows fallback settings', () => {
   process.env.SB_RSA306B_BACKEND = 'darwin-arm64';

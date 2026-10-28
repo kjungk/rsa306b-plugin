@@ -18,9 +18,18 @@ to supervised child processes.
 ## Device access
 
 The default backend is native on both platforms. macOS uses libusb. Windows uses
-SetupAPI and asynchronous `DeviceIoControl` with the existing RSA3USB3 driver;
-it loads neither the Tektronix API nor a Cypress userspace DLL. The optional
+SetupAPI and asynchronous `DeviceIoControl` with the installed Tektronix
+RSA3USB3 driver; it loads neither the Tektronix API nor a Cypress userspace DLL. The optional
 Windows API backend uses the separately installed x64 `RSA_API.dll`.
+The USB driver is supplied by the SignalVu-PC or RSA API installer.
+
+The only public plugin setting selects the Windows backend. Production always
+selects the bundled native worker or bundled Python interpreter, and the API
+fallback searches standard Tektronix installation locations. All path values
+saved by older plugin versions are ignored. Low-level worker factories retain
+overrides for offline tests; these are not forwarded from user configuration.
+Discovered devices supply their serial automatically; the serial input is
+marked `manualOnly`.
 
 Native acquisition requires RSA306B HW7, firmware 1.7, FPGA 2.1 and SuperSpeed
 USB. Device IDs derive from the serial number and every connection checks the
