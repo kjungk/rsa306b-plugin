@@ -3,11 +3,9 @@
 The first stable release brings the RSA306B into SoundBase Desktop's live
 spectrum plot and waterfall on Apple silicon Macs and Windows x64.
 
-This updated 1.0.0 package simplifies setup: bundled workers and Python are
-selected automatically, and the optional Windows API library is found in its
-standard installation location. Worker, Python and API DLL path fields have
-been removed. Previously saved path values are ignored after upgrading.
-Acquisition, calibration and scan controls are unchanged.
+Setup is automatic: the native workers and Windows fallback Python runtime
+are bundled. The optional Windows API library is detected in standard
+installation locations, so no path configuration is needed.
 
 - Native USB acquisition from 9 kHz to 6.2 GHz with the analyzer's factory
   calibration, adjustable RF attenuation and IF gain, and SoundBase trace modes.
@@ -18,10 +16,6 @@ Acquisition, calibration and scan controls are unchanged.
   for normal use; the optional **Tektronix API** fallback needs the x64 API.
 - Discovered analyzers supply their serial number automatically; the serial
   field is shown only when adding a device manually.
-
-This package replaces the earlier GitHub 1.0.0 download. If you already
-installed that package, download and reinstall this updated ZIP to get the
-simplified settings. Its version number remains 1.0.0.
 
 Download **rsa306b-1.0.0.zip** below; GitHub's automatic source archives are not
 installable plugin packages. See the [user manual](https://github.com/kjungk/rsa306b-plugin/blob/v1.0.0/docs/user-manual.md)
